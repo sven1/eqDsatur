@@ -2,6 +2,7 @@
 
 Coloring::Coloring(){
   std::cout << "Test A" << std::endl;
+  std::cout << "Test L" << std::endl;
 }
 
 Coloring::Coloring(const Parameters &parm){
