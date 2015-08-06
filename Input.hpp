@@ -1,9 +1,12 @@
 #include "boost.hpp"
+#include <string>
 
 class Input{
-  public:
-    static bool readGraph(Graph &g);
-    static bool readClique(Graph &g);
+  private:
+    static bool readGraph(const std::string &filename, const std::string &sType , Graph &g);
+    static bool readGraphCol(const std::string &filename, Graph &g);
 
-    static bool constructRandomGraph(Graph &g, int n, double p);
+  public:
+    static bool readGraph(const std::string &filename, Graph &g);
+    static bool readClique(Graph &g);
 };

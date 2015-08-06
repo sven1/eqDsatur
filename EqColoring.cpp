@@ -20,6 +20,10 @@ EqColoring::~EqColoring(){
 
 }
 
+bool EqColoring::node(Graph &g){
+  return true;
+}
+
 bool EqColoring::pruningRulePaper(){
   return true;
 }

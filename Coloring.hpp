@@ -17,6 +17,12 @@ class Coloring {
     Parameters parm;
     Backtracking bt;
 
+    void printNeighbours(const Vertex &v) const;
+    void printVertexInfo(const Vertex &v) const;
+    void printFBC(const Vertex &v) const;
+
+    bool checkColoring(const Vertex &v) const;
+
   protected:
     Colors cls;
 
@@ -37,12 +43,8 @@ class Coloring {
     void printVertexInfo() const;
     void printAdjMatrix() const;
     void printFBC() const;
-    void printNeighbours(const Vertex &v) const;
-    void printVertexInfo(const Vertex &v) const;
-    void printFBC(const Vertex &v) const;
     
     bool checkColoring() const;
-    bool checkColoring(const Vertex &v) const;
 };
 
 #endif
