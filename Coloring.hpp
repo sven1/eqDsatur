@@ -2,6 +2,8 @@
 #define COLORING_HPP
 
 #include "structs.hpp"
+#include "Input.hpp"
+#include "Heuristic.hpp"
 
 class Coloring {
   private:

@@ -3,9 +3,12 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall
 DEBUG = -g
 OPT = -O3
+DATE = $(shell date +"%m-%d-%y")
 
-eqDsatur : EqColoring.o Coloring.o main.cpp
-	$(CXX) $(CXXFLAGS) -o eqDsatur main.cpp EqColoring.o Coloring.o
+all : eqDsatur
+
+eqDsatur : EqColoring.o Coloring.o Input.o Heuristic.o main.cpp
+	$(CXX) $(CXXFLAGS) -o eqDsatur main.cpp EqColoring.o Coloring.o Input.o Heuristic.o
 
 EqColoring.o : EqColoring.cpp EqColoring.hpp Coloring.hpp
 	$(CXX) $(CXXFLAGS) -c EqColoring.cpp -o EqColoring.o
@@ -13,8 +16,17 @@ EqColoring.o : EqColoring.cpp EqColoring.hpp Coloring.hpp
 Coloring.o : Coloring.cpp Coloring.hpp
 	$(CXX) $(CXXFLAGS) -c Coloring.cpp -o Coloring.o
 
-clean:
+Input.o : Input.cpp Input.hpp
+	$(CXX) $(CXXFLAGS) -c Input.cpp -o Input.o
+
+Heuristic.o : Heuristic.cpp Heuristic.hpp
+	$(CXX) $(CXXFLAGS) -c Heuristic.cpp -o Heuristic.o
+
+clean :
 	rm eqDsatur *.o
 
+ctar :
+	rm *.tar
+
 tar :
-	tar -cvf eqDsatur.tar *.hpp *.cpp makefile
+	tar -cvf eqDsatur_$(DATE).tar *.hpp *.cpp makefile
