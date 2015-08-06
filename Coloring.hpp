@@ -17,6 +17,9 @@ class Coloring {
     Parameters parm;
     Backtracking bt;
 
+  protected:
+    Colors cls;
+
   public:
     Coloring();
     Coloring(const Parameters &parm);
@@ -31,8 +34,15 @@ class Coloring {
 
     bool node(Graph &g);
 
-    void printGraph(const Graph &g);
-    bool checkColoring(const Graph &g);
+    void printVertexInfo() const;
+    void printAdjMatrix() const;
+    void printFBC() const;
+    void printNeighbours(const Vertex &v) const;
+    void printVertexInfo(const Vertex &v) const;
+    void printFBC(const Vertex &v) const;
+    
+    bool checkColoring() const;
+    bool checkColoring(const Vertex &v) const;
 };
 
 #endif

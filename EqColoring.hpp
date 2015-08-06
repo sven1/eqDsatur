@@ -19,7 +19,9 @@ class EqColoring : Coloring{
 
     bool pruningRulePaper();
     bool pruningRuleFF();
-    bool checkEqColoring(const Graph &g);
+
+    bool checkEquitability() const;
+    bool checkEqColoring() const;
 };
 
 #endif

@@ -28,6 +28,26 @@ bool EqColoring::pruningRuleFF(){
   return true;
 }
 
-bool EqColoring::checkEqColoring(const Graph &g){
+bool EqColoring::checkEquitability() const{
+  for(unsigned int i = 0; i < cls.n.size(); i++){
+    for(unsigned int j = i+1; j < cls.n.size(); j++){
+      if(std::abs(cls.n[i] - cls.n[j]) > 1){
+        return false; 
+      }  
+    }
+  }
+
+  return true;
+}
+
+bool EqColoring::checkEqColoring() const{
+  if(!Coloring::checkColoring()){
+    return false;
+  }
+
+  if(!checkEquitability()){
+    return false;
+  }
+
   return true;
 }

@@ -65,4 +65,8 @@ struct Cliques {
   bool newClique;
 };
 
+struct Colors {
+  std::vector<int> n;
+};
+
 #endif
