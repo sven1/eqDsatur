@@ -6,7 +6,6 @@
 
 class EqColoring : Coloring{
   private:
-    Cliques cl;
     std::vector<prevGraphs> bpGraphs;  
 
   public:

@@ -41,6 +41,7 @@ struct Parameters {
   long nRandomGraphs;
   long n;
   double p;
+  char variant;
 };
 
 struct Time {
