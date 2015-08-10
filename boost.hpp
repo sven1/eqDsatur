@@ -8,6 +8,7 @@
 #include <boost/graph/edmonds_karp_max_flow.hpp>
 #include <boost/graph/max_cardinality_matching.hpp>
 #include <boost/graph/push_relabel_max_flow.hpp>
+#include <boost/bind.hpp>
 
 #include <vector>
 #include <iostream>

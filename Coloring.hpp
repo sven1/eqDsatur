@@ -16,12 +16,30 @@ class Coloring {
     Current curr;
     Parameters parm;
     Backtracking bt;
+    Colors cc;
+
+    bool initPropMap();
+    bool initNeighbours();
+    bool initResize();
+
+    bool initVar();
+
+    bool setBounds(int LB, int UB);
+    bool setCurr(int c, int r, Vertex node, int uncoloredVertices);
+    bool setBacktracking(bool status, Vertex node);
+
+    bool findMaxClique(std::vector<Vertex> &clq, Vertex v, bool uncolored, bool inNoOtherClique);
+
+    bool compareDegree(Vertex v, Vertex w);
+
+    bool putNodeWithParm(Vertex v, std::vector<Vertex> &tmp, bool uncolored, bool inOtherClique);
 
     void printNeighbours(const Vertex &v) const;
     void printVertexInfo(const Vertex &v) const;
     void printFBC(const Vertex &v) const;
 
     bool checkColoring(const Vertex &v) const;
+    bool checkClique(const std::vector<Vertex> &clq) const;
 
   protected:
     Colors cls;
@@ -43,7 +61,10 @@ class Coloring {
     void printVertexInfo() const;
     void printAdjMatrix() const;
     void printFBC() const;
+    void printClique(const std::vector<Vertex> &clq) const;
     
+    bool findMaxClique(std::vector<Vertex> &clq, bool uncolored, bool inNoOtherClique);
+
     bool checkColoring() const;
 };
 

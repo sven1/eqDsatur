@@ -1,7 +1,6 @@
 #include "EqColoring.hpp"
 
 EqColoring::EqColoring() : Coloring(){
-  std::cout << "Test B" << std::endl;
 }
 
 EqColoring::EqColoring(const Parameters &parm) : Coloring(parm){

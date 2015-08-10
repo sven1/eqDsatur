@@ -7,7 +7,6 @@ class Heuristic{
   
   public:
     static bool findIndepCliques(Graph &g, PropertyMap &pm);
-    static bool findMaxClique(Graph &g, PropertyMap &pm);
 
     static bool constructRandomGraph(Graph &g, int n, double p);
 };
