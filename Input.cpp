@@ -1,5 +1,49 @@
 #include "Input.hpp"
+#include <cstdlib>
+#include <string>
 #include <fstream>
+
+bool Input::readInputArgs(int argc, char** argv, Parameters &p){
+  if(argc < 2){
+    std::cout << "No Variant" << std::endl;
+
+    return false;
+  }else{
+    if(std::string(argv[1]) == "N"){
+      if(argc != 6){
+        std::cout << "Missing some arguments in (N)ormal mode" << std::endl;
+
+        return false;
+      }else{
+        p.nPruningRule = atol(argv[2]);
+        p.timeLimit = atol(argv[3]);
+        p.threshold = atol(argv[4]);
+        p.ressource = argv[5];
+        p.variant = 'N';
+      }
+    }else if(std::string(argv[1]) == "R"){
+      if(argc != 8){
+        std::cout << "Missing some arguments in (R)andom mode" << std::endl;
+
+        return false;
+      }else{
+        p.nPruningRule = atol(argv[2]);
+        p.timeLimit = atol(argv[3]);
+        p.threshold = atol(argv[4]);
+        p.nRandomGraphs = atol(argv[5]);
+        p.n = atol(argv[6]);
+        p.p = atof(argv[7]);
+        p.variant = 'R';
+      }
+    }else{
+      std::cout << "Not a valid Variant" << std::endl;
+
+      return false;
+    }
+  }
+
+  return true;
+}
 
 bool Input::readGraph(const std::string &filename, Graph &g){
   std::string sType;

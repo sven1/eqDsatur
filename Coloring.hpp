@@ -29,7 +29,7 @@ class Coloring {
 
     bool setBounds(int LB, int UB);
     bool setClique(long nodesInClique, long nCliques, bool newClique);
-    bool setCurr(int c, int r, Vertex node, int uncoloredVertices);
+    bool setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, int M, long nColors);
     bool setBacktracking(bool status, Vertex node);
     bool setParm(long n = 40, double p = 0.5, long npr = 1, long tl = 3600, long th = 2, std::string res = "res/queen7_7.col", long nrg = 200, char variant = 'R');
 
@@ -38,7 +38,7 @@ class Coloring {
     bool compareDegree(Vertex v, Vertex w);
 
     bool putNodeWithParm(Vertex v, std::vector<Vertex> &tmp, bool uncolored, bool inOtherClique);
-    bool putInClique(std::vector<Vertex> &clq, int toClique);
+    bool putInClique(std::vector<Vertex> &clq);
 
     void printNeighbours(const Vertex &v) const;
     void printVertexInfo(const Vertex &v) const;
@@ -58,11 +58,12 @@ class Coloring {
   
     ~Coloring();
 
-    // bounds
     long naiveUB(const Graph &g);
     long eqlLB(const Graph &g);
 
-    bool node(Graph &g);
+    bool passVSS();
+
+    bool node();
 
     void printVertexInfo() const;
     void printAdjMatrix() const;
@@ -70,15 +71,19 @@ class Coloring {
     void printFBC() const;
     void printClique(const std::vector<Vertex> &clq) const;
     void printIndepCliques(const std::vector<std::vector<Vertex> > &indClq) const;
+    void printGraphHeaders() const;
     void printAll() const;
     
     bool findMaxClique(std::vector<Vertex> &clq, bool uncolored, bool inNoOtherClique);
-    bool findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool uncolored, bool inNoOtherClique, int iFirstClique);
+    bool findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool uncolored, bool inNoOtherClique);
 
     bool checkColoring() const;
 
     bool colorClique(std::vector<Vertex> &clq, int startColor);
     bool checkIndepClique(std::vector<std::vector<Vertex> > &indClq);
+
+    int calcUB();
+    int calcLB();
 };
 
 #endif

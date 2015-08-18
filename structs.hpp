@@ -6,9 +6,12 @@
 
 struct Current {
   long color;
+  long nColors;
   long rank;
   Vertex node;
   long uncoloredVertices;
+  int T;
+  int M;
 };
 
 struct prevGraphs {

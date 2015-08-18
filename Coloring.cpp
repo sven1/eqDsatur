@@ -1,16 +1,6 @@
 #include "Coloring.hpp"
 
 Coloring::Coloring(){
-  parm.variant = 'R';
-
-  if(parm.variant == 'R'){
-    Heuristic::constructRandomGraph(g, 10, 0.2);
-  }else if(parm.variant == 'G'){
-    Input::readGraph("res/queen7_7.col", g);
-  }
-
-  setParm(num_vertices(g));
-
   if(!initVar()){
     exit(0);
   }
@@ -19,11 +9,21 @@ Coloring::Coloring(){
 }
 
 Coloring::Coloring(const Parameters &parm){
+  this->parm = parm;
+
+  if(this->parm.variant == 'R'){
+    Heuristic::constructRandomGraph(g, this->parm.n, this->parm.p);
+  }else if(this->parm.variant == 'N'){
+    Input::readGraph(this->parm.ressource, g);
+
+    this->parm.n = num_vertices(g);
+  }
+
   if(!initVar()){
     exit(0);
   }
   
-  this->parm = parm;
+  printAll();
 }
 
 Coloring::Coloring(const Graph &g){
@@ -47,18 +47,41 @@ Coloring::~Coloring(){
 
 }
 
+int Coloring::calcLB(){
+  return 0;
+}
+
+int Coloring::calcUB(){
+  return 49;
+}
+
 bool Coloring::initCliques(){
   findMaxClique(startClique, true, true);
-  putInClique(startClique, 1);
-  cl.nodesInClique += startClique.size();
-  cl.nCliques = 1;
+  putInClique(startClique);
   colorClique(startClique, 1);
-  findIndepCliques(indClq, true, true, 1);
+  findIndepCliques(indClq, true, true);
+
+  setCurr(curr.color, curr.rank, curr.node, curr.uncoloredVertices, curr.rank, 1, curr.rank);
 
   return true;
 }
 
+void Coloring::printGraphHeaders() const{
+  std::cout << "n: " << parm.n << std::endl;
+  std::cout << "how often do FF pruning rule (mod): " << parm.nPruningRule << std::endl;
+  std::cout << "time limit: " << parm.timeLimit << std::endl;
+  std::cout << "threshold: " << parm.threshold << std::endl;
+
+  if(parm.variant == 'N'){
+    std::cout << "ressource file: " << parm.ressource << std::endl;
+  }else if(parm.variant == 'R'){
+    std::cout << "p: " << parm.p << std::endl;
+    std::cout << "number of random graphs: " << parm.nRandomGraphs << std::endl;
+  }
+}
+
 void Coloring::printAll() const{
+  printGraphHeaders();
   printAdjMatrix();
   printClique(startClique);
   printIndepCliques(indClq);
@@ -76,15 +99,18 @@ bool Coloring::checkIndepClique(std::vector<std::vector<Vertex> > &indClq){
   return true;
 }
 
+// passt rank und uncoloredVertices direkt an
 bool Coloring::colorClique(std::vector<Vertex> &clq, int startColor){
   int color = startColor;
 
   for(unsigned int i = 0; i < clq.size(); i++){
-    pm.c[clq[i]] = color;
-    pm.r[clq[i]] = curr.rank + 1;
-    color++;
-    curr.uncoloredVertices--;
     curr.rank++;
+    curr.uncoloredVertices--;
+
+    pm.c[clq[i]] = color;
+    pm.r[clq[i]] = curr.rank;
+
+    color++;
   }
 
   return true;
@@ -107,10 +133,15 @@ bool Coloring::compareDegree(Vertex v, Vertex w){
   return (in_degree(v, g) < in_degree(w, g));
 }
 
-bool Coloring::putInClique(std::vector<Vertex> &clq, int toClique){
+// passt Knoten in Clique an und anzahl cliquen
+bool Coloring::putInClique(std::vector<Vertex> &clq){
+  cl.nCliques++;
+
   for(unsigned int i = 0; i < clq.size(); i++){
-    pm.cl[clq[i]] = toClique;
+    pm.cl[clq[i]] = cl.nCliques;
   }
+
+  cl.nodesInClique += clq.size();
 
   return true;
 }
@@ -121,11 +152,13 @@ void Coloring::printIndepCliques(const std::vector<std::vector<Vertex> > &indClq
   }
 }
 
-bool Coloring::findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool uncolored, bool inNoOtherClique, int iFirstClique){
+bool Coloring::findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool uncolored, bool inNoOtherClique){
   adjaIter aIt1, aIt2;
   vertexIter vIt1, vIt2;
-  int toVisit = curr.uncoloredVertices, toClique = iFirstClique;
+  int toVisit = curr.uncoloredVertices;
   std::vector<Vertex> tmp;
+
+  indClq.clear();
 
   while(toVisit > 0){
     tmp.clear();
@@ -133,11 +166,9 @@ bool Coloring::findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool 
     findMaxClique(tmp, uncolored, inNoOtherClique);
     indClq.push_back(tmp);
 
-    toClique++;
-    putInClique(tmp, toClique);
+    putInClique(tmp);
 
     toVisit -= tmp.size();
-    cl.nodesInClique += tmp.size();
 
     //mark neighbours as visited -> Clique: -1
     for(unsigned int i = 0; i < tmp.size(); i++){
@@ -149,8 +180,6 @@ bool Coloring::findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool 
       }
     }
   }
-
-  cl.nCliques = toClique;
 
   //remove visited Nodes
   for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
@@ -252,6 +281,8 @@ bool Coloring::findMaxClique(std::vector<Vertex> &clq, bool uncolored, bool inNo
 
   if(!checkClique(maxClique)){
     std::cout << "not a clique!" << std::endl;
+
+    return false;
   }
 
   clq = maxClique;
@@ -311,11 +342,14 @@ bool Coloring::setClique(long nodesInClique, long nCliques, bool newClique){
   return true;
 }
 
-bool Coloring::setCurr(int c, int r, Vertex node, int uncoloredVertices){
+bool Coloring::setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, int M, long nColors){
   curr.color = c;
   curr.rank = r;
   curr.node = node;
   curr.uncoloredVertices = uncoloredVertices;
+  curr.T = T;
+  curr.M = M;
+  curr.nColors = nColors;
 
   return true;
 }
@@ -334,7 +368,7 @@ bool Coloring::initVar(){
     return false;
   }
 
-  if(!setBounds(0, 49)){
+  if(!setBounds(calcLB(), calcUB())){
     std::cout << "error while setting init bounds" << std::endl;
     
     return false;
@@ -358,7 +392,7 @@ bool Coloring::initVar(){
     return false;
   }
 
-  if(!setCurr(0, 0, 0, parm.n)){
+  if(!setCurr(0, 0, 0, parm.n, 0, 0, 0)){
     std::cout << "error while setting init current information" << std::endl;
 
     return false;
@@ -371,7 +405,7 @@ bool Coloring::initVar(){
   }
 
   if(!initCliques()){
-    std::cout << "init neighbours vector failed!" << std::endl;
+    std::cout << "init cliques failed!" << std::endl;
     
     return false;
   }
@@ -400,7 +434,11 @@ long Coloring::eqlLB(const Graph &g){
   return 0;
 }
 
-bool Coloring::node(Graph &g){
+bool Coloring::passVSS(){
+  return true;
+}
+
+bool Coloring::node(){
   return true;
 }
 
@@ -481,5 +519,3 @@ bool Coloring::checkColoring(const Vertex &v) const{
 
   return true;
 }
-
-

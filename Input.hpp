@@ -1,4 +1,5 @@
 #include "boost.hpp"
+#include "structs.hpp"
 #include <string>
 
 class Input{
@@ -9,4 +10,5 @@ class Input{
   public:
     static bool readGraph(const std::string &filename, Graph &g);
     static bool readClique(Graph &g);
+    static bool readInputArgs(int argc, char** argv, Parameters &p);
 };
