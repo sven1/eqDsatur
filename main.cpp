@@ -14,7 +14,7 @@ int main(int argc, char** argv){
     exit(-1);
   }
 
-  Coloring c(p);
+  EqColoring e(p);
 
   return 0;
 }

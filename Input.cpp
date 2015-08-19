@@ -110,13 +110,16 @@ bool Input::readGraphCol(const std::string &filename, Graph &g){
 
           file >> nVertices;
           file >> nEdges;
+
         } break;
 
         case 'e':{
           file >> fromV;
           file >> toV;
 
-          error = add_edge(fromV, toV, g).second;
+          if(fromV < toV){
+            error = add_edge(fromV, toV, g).second;
+          }
 
           if(!error){
             std::cout << "edge already exists" << std::endl;
@@ -143,8 +146,7 @@ bool Input::readGraphCol(const std::string &filename, Graph &g){
     return false;
   }
 
-  // remove first Vertex for compatible reasons
-  remove_vertex(*(vertices(g).first),g);
+  remove_vertex(0, g);
 
   file.close();
   

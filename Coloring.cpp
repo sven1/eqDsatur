@@ -48,11 +48,21 @@ Coloring::~Coloring(){
 }
 
 int Coloring::calcLB(){
-  return 0;
+  return startClique.size();
 }
 
 int Coloring::calcUB(){
-  return 49;
+  Graph tmpG;
+  Current tmp;
+
+  copy_graph(g, tmpG);
+  tmp = curr;
+  greedyColoring(g);
+  printAll();
+  g = tmpG;
+  curr = tmp;
+
+  return parm.n;
 }
 
 bool Coloring::initCliques(){
@@ -61,7 +71,7 @@ bool Coloring::initCliques(){
   colorClique(startClique, 1);
   findIndepCliques(indClq, true, true);
 
-  setCurr(curr.color, curr.rank, curr.node, curr.uncoloredVertices, curr.rank, 1, curr.rank);
+  setCurr(curr.color, curr.rank, curr.node, curr.uncoloredVertices, curr.rank, 1, curr.nColors);
 
   return true;
 }
@@ -80,13 +90,26 @@ void Coloring::printGraphHeaders() const{
   }
 }
 
+void Coloring::printCurrent() const{
+  std::cout << "amount of used colors: " << curr.nColors << std::endl;
+  std::cout << "current node: " << curr.node << std::endl;
+  std::cout << "current color: " << curr.color << std::endl;
+  std::cout << "current rank: " << curr.rank << std::endl;
+  std::cout << "M (cardinality of greatest color class): " << curr.M << std::endl;
+  std::cout << "T (amount of greatest color classes): " << curr.T << std::endl;
+  std::cout << "current uncoloredVertices: " << curr.uncoloredVertices << std::endl;
+}
+
 void Coloring::printAll() const{
   printGraphHeaders();
+  printCurrent();
+  printBounds();
   printAdjMatrix();
   printClique(startClique);
   printIndepCliques(indClq);
   printCliqueInfo();
   printVertexInfo();
+  printFBC();
 }
 
 void Coloring::printCliqueInfo() const{
@@ -104,11 +127,7 @@ bool Coloring::colorClique(std::vector<Vertex> &clq, int startColor){
   int color = startColor;
 
   for(unsigned int i = 0; i < clq.size(); i++){
-    curr.rank++;
-    curr.uncoloredVertices--;
-
-    pm.c[clq[i]] = color;
-    pm.r[clq[i]] = curr.rank;
+    colorVertex(clq[i], color);
 
     color++;
   }
@@ -334,6 +353,11 @@ bool Coloring::setBounds(int LB, int UB){
   return true;
 }
 
+void Coloring::printBounds() const{
+  std::cout << "UB: " << b.UB << std::endl;
+  std::cout << "LB: " << b.LB << std::endl;
+}
+
 bool Coloring::setClique(long nodesInClique, long nCliques, bool newClique){
   cl.nodesInClique = nodesInClique;
   cl.nCliques = nCliques;
@@ -368,7 +392,7 @@ bool Coloring::initVar(){
     return false;
   }
 
-  if(!setBounds(calcLB(), calcUB())){
+  if(!setBounds(0, parm.n)){
     std::cout << "error while setting init bounds" << std::endl;
     
     return false;
@@ -406,6 +430,12 @@ bool Coloring::initVar(){
 
   if(!initCliques()){
     std::cout << "init cliques failed!" << std::endl;
+    
+    return false;
+  }
+
+  if(!setBounds(calcLB(), b.UB)){
+    std::cout << "error while setting calc bounds" << std::endl;
     
     return false;
   }
@@ -515,6 +545,74 @@ bool Coloring::checkColoring(const Vertex &v) const{
     if(pm.c[source(*oIt1,g)] == pm.c[target(*oIt1,g)]){
       return false;   
     }
+  }
+
+  return true;
+}
+
+bool Coloring::greedyColoring(Graph &g){
+  vertexIter vIt1, vIt2;
+  Colors cSize;
+  int sColor;
+  long color = curr.nColors;
+
+  cSize.n.clear();
+
+  for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
+    if(pm.c[*vIt1] == 0){
+      sColor = smallestPosColor(*vIt1);
+
+      if(sColor == -1){
+        color++;
+        colorVertex(*vIt1, color);
+      }else{
+        colorVertex(*vIt1, sColor);
+      }
+    }
+  }
+
+  if(!checkColoring()){
+    std::cout << "No coloring!" << std::endl;
+  }
+
+  return true;
+}
+
+int Coloring::smallestPosColor(Vertex v) const{
+  for(unsigned int i = 0; i < pm.fbc[v].size() && i < curr.nColors; i++){
+    if(pm.fbc[v][i] == 0){
+      return i + 1;
+    }
+  }
+
+  return -1;
+}
+
+bool Coloring::colorVertex(Vertex v, int color){
+  curr.rank++;
+  curr.uncoloredVertices--;
+  
+  pm.c[v] = color;
+  pm.r[v] = curr.rank;
+
+  if(color > curr.nColors){
+    if(std::abs(color - curr.nColors) > 1){
+      std::cout << "differenz der farben zu gross" << std::endl;
+    }
+
+    curr.nColors++;
+  }
+
+  addFBC(v, color);
+
+  return true;
+}
+
+bool Coloring::addFBC(Vertex v, int color){
+  adjaIter aIt1, aIt2;
+
+  for(tie(aIt1,aIt2) = adjacent_vertices(v,g); aIt1 != aIt2; aIt1++){
+    pm.fbc[*aIt1][color - 1]++;
   }
 
   return true;

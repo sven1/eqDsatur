@@ -4,7 +4,7 @@ EqColoring::EqColoring() : Coloring(){
 }
 
 EqColoring::EqColoring(const Parameters &parm) : Coloring(parm){
-
+  calcUB();
 }
 
 EqColoring::EqColoring(const Graph &g) : Coloring(g){
@@ -53,4 +53,18 @@ bool EqColoring::checkEqColoring() const{
   }
 
   return true;
+}
+
+int EqColoring::calcUB(){
+  Graph tmpG;
+  Current tmp;
+
+  copy_graph(g, tmpG);
+  tmp = curr;
+  greedyColoring(g);
+  printAll();
+  g = tmpG;
+  curr = tmp;
+
+  return 0;
 }

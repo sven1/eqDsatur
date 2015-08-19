@@ -23,6 +23,8 @@ class EqColoring : Coloring{
 
     bool checkEquitability() const;
     bool checkEqColoring() const;
+    
+    int calcUB();
 };
 
 #endif

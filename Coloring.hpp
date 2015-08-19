@@ -6,7 +6,7 @@
 #include "Heuristic.hpp"
 
 class Coloring {
-  private:
+  protected:
     Graph g;
     Bounds b;
     PropertyMap pm;
@@ -47,7 +47,6 @@ class Coloring {
     bool checkColoring(const Vertex &v) const;
     bool checkClique(const std::vector<Vertex> &clq) const;
 
-  protected:
     Colors cls;
 
   public:
@@ -73,6 +72,8 @@ class Coloring {
     void printIndepCliques(const std::vector<std::vector<Vertex> > &indClq) const;
     void printGraphHeaders() const;
     void printAll() const;
+    void printBounds() const;
+    void printCurrent() const;
     
     bool findMaxClique(std::vector<Vertex> &clq, bool uncolored, bool inNoOtherClique);
     bool findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool uncolored, bool inNoOtherClique);
@@ -84,6 +85,12 @@ class Coloring {
 
     int calcUB();
     int calcLB();
+
+    bool greedyColoring(Graph &g);
+    int smallestPosColor(Vertex v) const;
+
+    bool colorVertex(Vertex v, int color);
+    bool addFBC(Vertex v, int color);
 };
 
 #endif
