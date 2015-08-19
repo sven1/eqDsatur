@@ -71,7 +71,12 @@ bool Coloring::initCliques(){
   colorClique(startClique, 1);
   findIndepCliques(indClq, true, true);
 
-  setCurr(curr.color, curr.rank, curr.node, curr.uncoloredVertices, curr.rank, 1, curr.nColors);
+  return true;
+}
+
+bool Coloring::setTandM(int T, int M){
+  curr.M = M;
+  curr.T = T;
 
   return true;
 }
@@ -100,6 +105,16 @@ void Coloring::printCurrent() const{
   std::cout << "current uncoloredVertices: " << curr.uncoloredVertices << std::endl;
 }
 
+void Coloring::printColorClass(int i) const{
+  std::cout << "color class " << i << ": " << cc.n[i-1] << std::endl;
+}
+
+void Coloring::printColorClasses() const{
+  for(int i = 1; i <= curr.nColors; i++){
+    printColorClass(i);
+  }
+}
+
 void Coloring::printAll() const{
   printGraphHeaders();
   printCurrent();
@@ -110,6 +125,7 @@ void Coloring::printAll() const{
   printCliqueInfo();
   printVertexInfo();
   printFBC();
+  printColorClasses();
 }
 
 void Coloring::printCliqueInfo() const{
@@ -552,11 +568,8 @@ bool Coloring::checkColoring(const Vertex &v) const{
 
 bool Coloring::greedyColoring(Graph &g){
   vertexIter vIt1, vIt2;
-  Colors cSize;
   int sColor;
   long color = curr.nColors;
-
-  cSize.n.clear();
 
   for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
     if(pm.c[*vIt1] == 0){
@@ -604,8 +617,34 @@ bool Coloring::colorVertex(Vertex v, int color){
   }
 
   addFBC(v, color);
+  incColorClass(color);
 
   return true;
+}
+
+bool Coloring::updateTandM(int lastColor){
+  if(cc.n[lastColor - 1] > curr.M){
+    curr.M = cc.n[lastColor - 1];
+    curr.T = 1;
+  }else if(cc.n[lastColor - 1] == curr.M){
+    curr.T++;
+  }
+
+  return true;
+}
+
+bool Coloring::incColorClass(int color){
+  if((int) cc.n.size() > color){
+    cc.n[color - 1]++;
+
+    updateTandM(color);
+
+    return true;
+  }else{
+    std::cout << "not enough color classes" << std::endl;
+
+    return false;
+  }
 }
 
 bool Coloring::addFBC(Vertex v, int color){

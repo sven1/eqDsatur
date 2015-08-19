@@ -32,6 +32,7 @@ class Coloring {
     bool setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, int M, long nColors);
     bool setBacktracking(bool status, Vertex node);
     bool setParm(long n = 40, double p = 0.5, long npr = 1, long tl = 3600, long th = 2, std::string res = "res/queen7_7.col", long nrg = 200, char variant = 'R');
+    bool setTandM(int T, int M);
 
     bool findMaxClique(std::vector<Vertex> &clq, Vertex v, bool uncolored, bool inNoOtherClique);
 
@@ -46,6 +47,8 @@ class Coloring {
 
     bool checkColoring(const Vertex &v) const;
     bool checkClique(const std::vector<Vertex> &clq) const;
+
+    bool updateTandM(int lastColor);
 
     Colors cls;
 
@@ -74,6 +77,8 @@ class Coloring {
     void printAll() const;
     void printBounds() const;
     void printCurrent() const;
+    void printColorClass(int i) const;
+    void printColorClasses() const;
     
     bool findMaxClique(std::vector<Vertex> &clq, bool uncolored, bool inNoOtherClique);
     bool findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool uncolored, bool inNoOtherClique);
@@ -91,6 +96,7 @@ class Coloring {
 
     bool colorVertex(Vertex v, int color);
     bool addFBC(Vertex v, int color);
+    bool incColorClass(int color);
 };
 
 #endif

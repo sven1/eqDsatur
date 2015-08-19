@@ -58,13 +58,17 @@ bool EqColoring::checkEqColoring() const{
 int EqColoring::calcUB(){
   Graph tmpG;
   Current tmp;
+  Colors cc_tmp;
 
   copy_graph(g, tmpG);
   tmp = curr;
+  cc_tmp = cc;
   greedyColoring(g);
   printAll();
   g = tmpG;
   curr = tmp;
+  cc = cc_tmp;
+  printAll();
 
   return 0;
 }
