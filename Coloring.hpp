@@ -48,7 +48,10 @@ class Coloring {
     bool checkColoring(const Vertex &v) const;
     bool checkClique(const std::vector<Vertex> &clq) const;
 
-    bool updateTandM(int lastColor);
+    bool updateTandM(int lastColor, bool inc);
+
+    bool incSatDeg(Vertex v, int color);
+    bool decSatDeg(Vertex v, int color);
 
     Colors cls;
 
@@ -95,8 +98,13 @@ class Coloring {
     int smallestPosColor(Vertex v) const;
 
     bool colorVertex(Vertex v, int color);
+    bool uncolorVertex(Vertex v);
+    
     bool addFBC(Vertex v, int color);
+    bool removeFBC(Vertex v, int color);
+    
     bool incColorClass(int color);
+    bool decColorClass(int color);
 };
 
 #endif

@@ -25,6 +25,10 @@ class EqColoring : Coloring{
     bool checkEqColoring() const;
     
     int calcUB();
+    int naiveUB();
+
+    bool swapNodeToColor(Vertex v, int color);
+    std::pair<int, int> findMinMaxColorClass(int cMin, int cMax);
 };
 
 #endif

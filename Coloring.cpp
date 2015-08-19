@@ -4,8 +4,6 @@ Coloring::Coloring(){
   if(!initVar()){
     exit(0);
   }
-
-  printAll();
 }
 
 Coloring::Coloring(const Parameters &parm){
@@ -22,8 +20,6 @@ Coloring::Coloring(const Parameters &parm){
   if(!initVar()){
     exit(0);
   }
-  
-  printAll();
 }
 
 Coloring::Coloring(const Graph &g){
@@ -119,13 +115,13 @@ void Coloring::printAll() const{
   printGraphHeaders();
   printCurrent();
   printBounds();
-  printAdjMatrix();
-  printClique(startClique);
-  printIndepCliques(indClq);
+  //printAdjMatrix();
+  //printClique(startClique);
+  //printIndepCliques(indClq);
   printCliqueInfo();
-  printVertexInfo();
-  printFBC();
-  printColorClasses();
+  //printVertexInfo();
+  //printFBC();
+  //printColorClasses();
 }
 
 void Coloring::printCliqueInfo() const{
@@ -622,12 +618,22 @@ bool Coloring::colorVertex(Vertex v, int color){
   return true;
 }
 
-bool Coloring::updateTandM(int lastColor){
-  if(cc.n[lastColor - 1] > curr.M){
-    curr.M = cc.n[lastColor - 1];
-    curr.T = 1;
-  }else if(cc.n[lastColor - 1] == curr.M){
-    curr.T++;
+bool Coloring::updateTandM(int lastColor, bool inc){
+  if(inc){
+    if(cc.n[lastColor - 1] > curr.M){
+      curr.M = cc.n[lastColor - 1];
+      curr.T = 1;
+    }else if(cc.n[lastColor - 1] == curr.M){
+      curr.T++;
+    }
+  }else{
+    if(cc.n[lastColor - 1] == curr.M - 1){
+      curr.T--;
+
+      if(curr.T == 0){
+        curr.M--;
+      }
+    }
   }
 
   return true;
@@ -637,7 +643,7 @@ bool Coloring::incColorClass(int color){
   if((int) cc.n.size() > color){
     cc.n[color - 1]++;
 
-    updateTandM(color);
+    updateTandM(color, true);
 
     return true;
   }else{
@@ -652,7 +658,66 @@ bool Coloring::addFBC(Vertex v, int color){
 
   for(tie(aIt1,aIt2) = adjacent_vertices(v,g); aIt1 != aIt2; aIt1++){
     pm.fbc[*aIt1][color - 1]++;
+
+    incSatDeg(*aIt1, color);
   }
 
   return true;
+}
+
+bool Coloring::incSatDeg(Vertex v, int color){
+  if(pm.fbc[v][color - 1] == 1){
+    pm.g[v]++; 
+  }
+
+  return true;
+}
+
+bool Coloring::uncolorVertex(Vertex v){
+  curr.rank--;
+  curr.uncoloredVertices++;
+  
+  int color = pm.c[v];
+
+  pm.c[v] = 0;
+  pm.r[v] = 0;
+
+  removeFBC(v, color);
+  decColorClass(color);
+
+  return true;
+}
+
+bool Coloring::removeFBC(Vertex v, int color){
+  adjaIter aIt1, aIt2;
+
+  for(tie(aIt1,aIt2) = adjacent_vertices(v,g); aIt1 != aIt2; aIt1++){
+    pm.fbc[*aIt1][color - 1]--;
+
+    decSatDeg(*aIt1, color);
+  }
+
+  return true;
+}
+
+bool Coloring::decSatDeg(Vertex v, int color){
+  if(pm.fbc[v][color - 1] == 0){
+    pm.g[v]--; 
+  }
+
+  return true;
+}
+
+bool Coloring::decColorClass(int color){
+  if((int) cc.n.size() > color){
+    cc.n[color - 1]--;
+
+    updateTandM(color, false);
+
+    return true;
+  }else{
+    std::cout << "not enough color classes" << std::endl;
+
+    return false;
+  }
 }
