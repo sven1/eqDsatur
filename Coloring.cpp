@@ -388,9 +388,51 @@ bool Coloring::setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, 
   return true;
 }
 
-bool Coloring::setBacktracking(bool status, Vertex node){
+bool Coloring::checkForBacktracking(Vertex v){
+  for(int i = 1; i <= curr.nColors; i++){
+    if(pm.fbc[v][i-1] == 0){
+      return false;
+    }
+  }
+
+  bt.toRank = backtrackToRank(v);
+  bt.status = true;
+
+  return true;
+}
+
+int Coloring::backtrackToRank(Vertex v){
+  adjaIter aIt1, aIt2;
+  int color, maxRank = 0;
+  std::vector<int> neighboursRankMap(curr.nColors, 0);
+
+  for(tie(aIt1,aIt2) = adjacent_vertices(v,g); aIt1 != aIt2; aIt1++){
+    color = pm.c[*aIt1];
+
+    if(color != 0){
+      if(pm.r[*aIt1] < neighboursRankMap[color - 1] || neighboursRankMap[color - 1] == 0){
+        neighboursRankMap[color - 1] = pm.r[*aIt1];
+      }
+    }
+  }
+
+  for(unsigned int i = 0; i < neighboursRankMap.size(); i++){
+    if(neighboursRankMap[i] > maxRank){
+      maxRank = neighboursRankMap[i];
+    }
+  }
+
+  if(maxRank < (int) startClique.size()){
+    std::cout << "error backtrack to startclique" << std::endl;
+  }
+
+  return maxRank;
+}
+
+bool Coloring::setBacktracking(bool status, Vertex node, int toRank){
   bt.status = status;
   bt.toNode = node;
+  bt.toRank = toRank;
 
   return true;
 }
@@ -420,7 +462,7 @@ bool Coloring::initVar(){
     return false;
   }
 
-  if(!setBacktracking(false, 0)){
+  if(!setBacktracking(false, 0, 0)){
     std::cout << "error while setting init backtracking" << std::endl;
     
     return false;
@@ -475,7 +517,7 @@ long Coloring::eqlLB(const Graph &g){
 }
 
 Vertex Coloring::passVSS(){
-  int maxSatDeg, sum = 0, maxSum = 0;
+  int maxSatDeg, sum, maxSum = 0;
   std::vector<Vertex> vertMaxSatDeg;
   Vertex vTmp, node;
 
@@ -498,8 +540,10 @@ Vertex Coloring::passVSS(){
       maxSum = sum;
       node = vTmp;
     }
+  }
 
-    sum = 0;
+  if(maxSum == 0){
+    return vertMaxSatDeg.back();
   }
 
   return node;
@@ -520,6 +564,14 @@ int Coloring::helpPassVSS(Vertex v, int maxSatDeg){
   }
 
   return sum;
+}
+
+int Coloring::upperGauss(double x){
+  if(x > (int) x){
+    return ((int) x) + 1;
+  }else{
+    return (int) x;
+  }
 }
 
 int Coloring::findMaxSatDeg(){
@@ -700,11 +752,25 @@ bool Coloring::updateTandM(int lastColor, bool inc){
 
       if(curr.T == 0){
         curr.M--;
+
+        curr.T = helpUpdateTandM(curr.M);
       }
     }
   }
 
   return true;
+}
+
+int Coloring::helpUpdateTandM(int M){
+  int sum = 0;
+  
+  for(int i = 0; i < curr.nColors; i++){
+    if(cc.n[i] == M){
+      sum++;
+    }
+  }
+
+  return sum;
 }
 
 bool Coloring::incColorClass(int color){
@@ -749,6 +815,10 @@ bool Coloring::uncolorVertex(Vertex v){
 
   pm.c[v] = 0;
   pm.r[v] = 0;
+  
+  if(cc.n[color - 1] == 1){
+    curr.nColors--;
+  }
 
   removeFBC(v, color);
   decColorClass(color);

@@ -16,7 +16,11 @@ class EqColoring : Coloring{
 
     ~EqColoring();
 
-    bool node(Graph &g);
+    bool node();
+    bool nodeClique();
+
+    bool dsatur();
+    bool dsaturClique();
 
     bool pruningRulePaper();
     bool pruningRuleFF();

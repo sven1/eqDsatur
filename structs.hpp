@@ -28,6 +28,7 @@ struct Bounds {
 struct Backtracking {
   bool status;
   Vertex toNode;
+  int toRank;
 };
 
 struct Count {

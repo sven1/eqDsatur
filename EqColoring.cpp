@@ -6,6 +6,8 @@ EqColoring::EqColoring() : Coloring(){
 EqColoring::EqColoring(const Parameters &parm) : Coloring(parm){
   setBounds(b.LB, calcUB());
 
+  dsatur();
+
   printAll();
 }
 
@@ -21,8 +23,61 @@ EqColoring::~EqColoring(){
 
 }
 
-bool EqColoring::node(Graph &g){
-  return true;
+bool EqColoring::node(){
+  if(curr.uncoloredVertices == 0){
+    b.UB = curr.nColors;
+
+    return true;
+  }
+
+  Vertex v = passVSS();
+
+
+  for(int i = 1; i <= std::min(b.UB - 1, curr.nColors + 1); i++){
+    if(pm.fbc[v][i - 1] == 0){
+      if(parm.n >= (curr.M - 1) * std::max(curr.nColors, b.LB) + curr.T){
+        colorVertex(v, i);
+
+        node(); 
+          
+        if(bt.status){
+          if(bt.toRank == curr.rank){
+            bt.status = false;
+          }else if(bt.toRank > curr.rank){
+            uncolorVertex(v);
+            return true;
+          }
+        }
+
+        uncolorVertex(v);
+      }
+    }
+  }
+
+  checkForBacktracking(v);
+
+  return false;
+}
+
+bool EqColoring::nodeClique(){
+
+  return false;
+}
+
+bool EqColoring::dsatur(){
+  if(node()){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool EqColoring::dsaturClique(){
+  if(nodeClique()){
+    return true;
+  }else{
+    return false;
+  }
 }
 
 bool EqColoring::pruningRulePaper(){
@@ -60,7 +115,7 @@ bool EqColoring::checkEqColoring() const{
 int EqColoring::naiveUB(){
   vertexIter vIt1, vIt2;
   Vertex v;
-  bool haveSwapped;
+  bool haveSwapped = false;
   std::pair<int, int> cMinMax;
 
   while(!checkEquitability()){

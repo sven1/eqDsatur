@@ -30,7 +30,7 @@ class Coloring {
     bool setBounds(int LB, int UB);
     bool setClique(long nodesInClique, long nCliques, bool newClique);
     bool setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, int M, long nColors);
-    bool setBacktracking(bool status, Vertex node);
+    bool setBacktracking(bool status, Vertex node, int toRank);
     bool setParm(long n = 40, double p = 0.5, long npr = 1, long tl = 3600, long th = 2, std::string res = "res/queen7_7.col", long nrg = 200, char variant = 'R');
     bool setTandM(int T, int M);
 
@@ -49,11 +49,15 @@ class Coloring {
 
     bool checkColoring(const Vertex &v) const;
     bool checkClique(const std::vector<Vertex> &clq) const;
+    bool checkForBacktracking(Vertex v);
 
     bool updateTandM(int lastColor, bool inc);
+    int helpUpdateTandM(int M);
 
     bool incSatDeg(Vertex v, int color);
     bool decSatDeg(Vertex v, int color);
+
+    int backtrackToRank(Vertex v);
 
     Colors cls;
 
@@ -108,6 +112,8 @@ class Coloring {
     
     bool incColorClass(int color);
     bool decColorClass(int color);
+
+    int upperGauss(double x);
 };
 
 #endif

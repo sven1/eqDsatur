@@ -1,6 +1,6 @@
 C = gcc
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall
+CXXFLAGS = -std=c++11 -Wall $(OPT)
 DEBUG = -g
 OPT = -O3
 DATE = $(shell date +"%m-%d-%y")
