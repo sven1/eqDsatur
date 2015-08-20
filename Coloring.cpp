@@ -119,7 +119,7 @@ void Coloring::printAll() const{
   //printClique(startClique);
   //printIndepCliques(indClq);
   printCliqueInfo();
-  //printVertexInfo();
+  printVertexInfo();
   //printFBC();
   //printColorClasses();
 }
@@ -134,7 +134,6 @@ bool Coloring::checkIndepClique(std::vector<std::vector<Vertex> > &indClq){
   return true;
 }
 
-// passt rank und uncoloredVertices direkt an
 bool Coloring::colorClique(std::vector<Vertex> &clq, int startColor){
   int color = startColor;
 
@@ -164,7 +163,6 @@ bool Coloring::compareDegree(Vertex v, Vertex w){
   return (in_degree(v, g) < in_degree(w, g));
 }
 
-// passt Knoten in Clique an und anzahl cliquen
 bool Coloring::putInClique(std::vector<Vertex> &clq){
   cl.nCliques++;
 
@@ -476,8 +474,78 @@ long Coloring::eqlLB(const Graph &g){
   return 0;
 }
 
-bool Coloring::passVSS(){
-  return true;
+Vertex Coloring::passVSS(){
+  int maxSatDeg, sum = 0, maxSum = 0;
+  std::vector<Vertex> vertMaxSatDeg;
+  Vertex vTmp, node;
+
+  maxSatDeg = findMaxSatDeg();
+
+  vertMaxSatDeg = findVertexSatDeg(maxSatDeg);
+
+  if(curr.nColors - maxSatDeg < parm.threshold){
+    std::sort(vertMaxSatDeg.begin(), vertMaxSatDeg.end(), boost::bind(&Coloring::compareDegree, this, _1, _2));
+
+    return vertMaxSatDeg.back();
+  }
+
+  for(unsigned int i = 0; i < vertMaxSatDeg.size(); i++){
+    vTmp = vertMaxSatDeg[i];
+
+    sum = helpPassVSS(vTmp, maxSatDeg);
+
+    if(sum > maxSum){
+      maxSum = sum;
+      node = vTmp;
+    }
+
+    sum = 0;
+  }
+
+  return node;
+}
+
+int Coloring::helpPassVSS(Vertex v, int maxSatDeg){
+  adjaIter aIt1, aIt2;
+  int sum = 0;
+
+  for(unsigned int j = 0; j < pm.fbc[v].size(); j++){
+    if(pm.fbc[v][j] == 0){
+      for(tie(aIt1,aIt2) = adjacent_vertices(v,g); aIt1 != aIt2; aIt1++){
+        if(pm.fbc[*aIt1][j] == 0 && pm.g[*aIt1] == maxSatDeg){
+          sum++;
+        } 
+      }
+    } 
+  }
+
+  return sum;
+}
+
+int Coloring::findMaxSatDeg(){
+  vertexIter vIt1, vIt2;
+  int maxSatDeg = 0;
+  
+  for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
+    if(pm.g[*vIt1] > maxSatDeg && pm.c[*vIt1] == 0 && pm.cl[*vIt1] != 1){
+      maxSatDeg = pm.g[*vIt1];
+    }
+  }
+
+  return maxSatDeg;
+}
+
+std::vector<Vertex> Coloring::findVertexSatDeg(int satDeg){
+  vertexIter vIt1, vIt2;
+  std::vector<Vertex> vertSatDeg;
+
+  for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
+    if(pm.g[*vIt1] == satDeg && pm.c[*vIt1] == 0 && pm.cl[*vIt1] != 1){
+      vertSatDeg.push_back(*vIt1);
+    }
+  }
+
+  return vertSatDeg;
 }
 
 bool Coloring::node(){

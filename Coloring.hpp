@@ -35,6 +35,8 @@ class Coloring {
     bool setTandM(int T, int M);
 
     bool findMaxClique(std::vector<Vertex> &clq, Vertex v, bool uncolored, bool inNoOtherClique);
+    int findMaxSatDeg();
+    std::vector<Vertex> findVertexSatDeg(int satDeg);
 
     bool compareDegree(Vertex v, Vertex w);
 
@@ -66,7 +68,8 @@ class Coloring {
     long naiveUB(const Graph &g);
     long eqlLB(const Graph &g);
 
-    bool passVSS();
+    Vertex passVSS();
+    int helpPassVSS(Vertex v, int maxSatDeg);
 
     bool node();
 
