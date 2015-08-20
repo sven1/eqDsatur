@@ -64,6 +64,12 @@ struct PropertyMap {
   RankMap r;
 };
 
+struct PropertyMapFF {
+  CapacityMap c;
+  ReverseEdgeMap re;
+  ResidualCapacityMap rc;
+};
+
 struct Cliques {
   long nodesInClique;
   long nCliques;

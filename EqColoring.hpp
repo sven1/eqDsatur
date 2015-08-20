@@ -6,7 +6,13 @@
 
 class EqColoring : Coloring{
   private:
-    std::vector<prevGraphs> bpGraphs;  
+    std::vector<prevGraphs> prevGraphsFF;
+    std::vector<PropertyMapFF> pmPrevGraphsFF;
+
+    GraphFord gf;
+    PropertyMapFF pmf;
+
+    bool initPrevGraphsFF();
 
   public:
     EqColoring();
@@ -27,6 +33,11 @@ class EqColoring : Coloring{
 
     bool checkEquitability() const;
     bool checkEqColoring() const;
+
+    bool useNewIndepCliques();
+
+    bool pruneFF();
+    bool pruneFF(int color);
     
     int calcUB();
     int naiveUB();

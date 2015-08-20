@@ -203,8 +203,10 @@ bool Coloring::findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool 
     for(unsigned int i = 0; i < tmp.size(); i++){
       for(tie(aIt1,aIt2) = adjacent_vertices(tmp[i],g); aIt1 != aIt2; aIt1++){
         if(pm.cl[*aIt1] == 0 && pm.c[*aIt1] == 0){
-          pm.cl[*aIt1] = -1;
-          toVisit--;
+          if(checkNodeParm(*aIt1, uncolored, inNoOtherClique)){
+            pm.cl[*aIt1] = -1;
+            toVisit--;
+          }
         }
       }
     }
@@ -220,6 +222,30 @@ bool Coloring::findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool 
   return true;
 }
 
+bool Coloring::checkNodeParm(Vertex v, bool uncolored, bool inNoOtherClique){
+  if(uncolored == true && inNoOtherClique == true){
+    if(pm.c[v] == 0 && pm.cl[v] == 0){
+      return true;
+    }else{
+      return false;
+    }
+  }else if(uncolored == true && inNoOtherClique == false){
+    if(pm.c[v] == 0 && pm.cl[v] > 1){
+      return true;
+    }else{
+      return false;
+    }
+  }else if(uncolored == false && inNoOtherClique == true){
+    if(pm.cl[v] == 0){
+      return true;
+    }else{
+      return false;
+    }
+  }else{
+    return true;
+  }
+}
+
 bool Coloring::putNodeWithParm(Vertex v, std::vector<Vertex> &tmp, bool uncolored, bool inNoOtherClique){
   if(uncolored == true && inNoOtherClique == true){
     if(pm.c[v] == 0 && pm.cl[v] == 0){
@@ -228,7 +254,7 @@ bool Coloring::putNodeWithParm(Vertex v, std::vector<Vertex> &tmp, bool uncolore
       return false;
     }
   }else if(uncolored == true && inNoOtherClique == false){
-    if(pm.c[v] == 0){
+    if(pm.c[v] == 0 && pm.cl[v] > 1){
       tmp.push_back(v);
     }else{
       return false;

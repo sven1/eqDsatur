@@ -50,6 +50,7 @@ class Coloring {
     bool checkColoring(const Vertex &v) const;
     bool checkClique(const std::vector<Vertex> &clq) const;
     bool checkForBacktracking(Vertex v);
+    bool checkNodeParm(Vertex v, bool uncolored, bool inNoOtherClique);
 
     bool updateTandM(int lastColor, bool inc);
     int helpUpdateTandM(int M);
