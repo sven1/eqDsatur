@@ -2,7 +2,7 @@
 #include "EqColoring.hpp"
 
 void usage(){
-  std::cout << "Usage: ./eqDsatur [N | R] nPruningRule timeLimit threshold [FILE | nRandomGraphs n p]" << std::endl;
+  std::cout << "Usage: ./eqDsatur [N | R] [N | C] nPruningRule timeLimit threshold [FILE | nRandomGraphs n p]" << std::endl;
 }
 
 int main(int argc, char** argv){

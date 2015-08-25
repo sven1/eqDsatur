@@ -46,6 +46,7 @@ struct Parameters {
   long n;
   double p;
   char variant;
+  char eqDsatur;
 };
 
 struct Time {

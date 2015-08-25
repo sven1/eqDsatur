@@ -116,12 +116,12 @@ void Coloring::printAll() const{
   printCurrent();
   printBounds();
   //printAdjMatrix();
-  //printClique(startClique);
-  //printIndepCliques(indClq);
+  printClique(startClique);
+  printIndepCliques(indClq);
   printCliqueInfo();
   printVertexInfo();
   //printFBC();
-  //printColorClasses();
+  printColorClasses();
 }
 
 void Coloring::printCliqueInfo() const{
@@ -202,11 +202,9 @@ bool Coloring::findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool 
     //mark neighbours as visited -> Clique: -1
     for(unsigned int i = 0; i < tmp.size(); i++){
       for(tie(aIt1,aIt2) = adjacent_vertices(tmp[i],g); aIt1 != aIt2; aIt1++){
-        if(pm.cl[*aIt1] == 0 && pm.c[*aIt1] == 0){
-          if(checkNodeParm(*aIt1, uncolored, inNoOtherClique)){
-            pm.cl[*aIt1] = -1;
-            toVisit--;
-          }
+        if(checkNodeParm(*aIt1, uncolored, inNoOtherClique)){
+          pm.cl[*aIt1] = -1;
+          toVisit--;
         }
       }
     }
@@ -230,7 +228,7 @@ bool Coloring::checkNodeParm(Vertex v, bool uncolored, bool inNoOtherClique){
       return false;
     }
   }else if(uncolored == true && inNoOtherClique == false){
-    if(pm.c[v] == 0 && pm.cl[v] > 1){
+    if(pm.c[v] == 0 && pm.cl[v] != 1){
       return true;
     }else{
       return false;
@@ -254,7 +252,7 @@ bool Coloring::putNodeWithParm(Vertex v, std::vector<Vertex> &tmp, bool uncolore
       return false;
     }
   }else if(uncolored == true && inNoOtherClique == false){
-    if(pm.c[v] == 0 && pm.cl[v] > 1){
+    if(pm.c[v] == 0 && pm.cl[v] != 1){
       tmp.push_back(v);
     }else{
       return false;
@@ -463,9 +461,23 @@ bool Coloring::setBacktracking(bool status, Vertex node, int toRank){
   return true;
 }
 
+bool Coloring::initCounts(){
+  c.nFF = 0;
+  c.visitedNodes = 0;
+  c.newCliques = 0;
+
+  return true;
+}
+
 bool Coloring::initVar(){
   if(!initPropMap()){
     std::cout << "error while loading property map" << std::endl;
+    
+    return false;
+  }
+
+  if(!initCounts()){
+    std::cout << "error init counts" << std::endl;
     
     return false;
   }

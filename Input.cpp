@@ -10,29 +10,31 @@ bool Input::readInputArgs(int argc, char** argv, Parameters &p){
     return false;
   }else{
     if(std::string(argv[1]) == "N"){
-      if(argc != 6){
+      if(argc != 7){
         std::cout << "Missing some arguments in (N)ormal mode" << std::endl;
 
         return false;
       }else{
-        p.nPruningRule = atol(argv[2]);
-        p.timeLimit = atol(argv[3]);
-        p.threshold = atol(argv[4]);
-        p.ressource = argv[5];
+        p.eqDsatur = *argv[2];
+        p.nPruningRule = atol(argv[3]);
+        p.timeLimit = atol(argv[4]);
+        p.threshold = atol(argv[5]);
+        p.ressource = argv[6];
         p.variant = 'N';
       }
     }else if(std::string(argv[1]) == "R"){
-      if(argc != 8){
+      if(argc != 9){
         std::cout << "Missing some arguments in (R)andom mode" << std::endl;
 
         return false;
       }else{
-        p.nPruningRule = atol(argv[2]);
-        p.timeLimit = atol(argv[3]);
-        p.threshold = atol(argv[4]);
-        p.nRandomGraphs = atol(argv[5]);
-        p.n = atol(argv[6]);
-        p.p = atof(argv[7]);
+        p.eqDsatur = *argv[2];
+        p.nPruningRule = atol(argv[3]);
+        p.timeLimit = atol(argv[4]);
+        p.threshold = atol(argv[5]);
+        p.nRandomGraphs = atol(argv[6]);
+        p.n = atol(argv[7]);
+        p.p = atof(argv[8]);
         p.variant = 'R';
       }
     }else{

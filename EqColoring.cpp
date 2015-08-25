@@ -8,9 +8,15 @@ EqColoring::EqColoring(const Parameters &parm) : Coloring(parm){
 
   initPrevGraphsFF();
 
-  dsaturClique();
-
+  if(parm.eqDsatur == 'N'){
+    dsatur();
+  }else if(parm.eqDsatur == 'C'){
+    dsaturClique();
+  }
+  
   printAll();
+
+  std::cout << "------ nVisited = " << c.visitedNodes << std::endl;
 }
 
 bool EqColoring::initPrevGraphsFF(){
@@ -51,6 +57,8 @@ bool EqColoring::node(){
   for(int i = 1; i <= std::min(b.UB - 1, curr.nColors + 1); i++){
     if(pm.fbc[v][i - 1] == 0){
       if(parm.n >= (curr.M - 1) * std::max(curr.nColors, b.LB) + curr.T){
+        c.visitedNodes++;
+
         colorVertex(v, i);
 
         node(); 
@@ -75,7 +83,7 @@ bool EqColoring::node(){
 }
 
 bool EqColoring::pruneFF(){
-  for(unsigned int i = b.LB; i <= curr.nColors; i++){
+  for(unsigned int i = curr.nColors; i < b.UB; i++){
     if(!pruneFF(i)){
       return false;
     }
@@ -84,23 +92,8 @@ bool EqColoring::pruneFF(){
   return true;
 }
 
-bool EqColoring::pruneFF(int color){
-  gf = prevGraphsFF[color - 1].g;
-  pmf = pmPrevGraphsFF[color - 1];
-
-  Traits::vertex_descriptor s, t, sNew, tNew;
+bool EqColoring::initA1(std::vector<VertexFord> &vert){
   EdgeFord eF1, eF2;
-  VertexFordIter vIt1, vIt2;
-  std::vector<VertexFord> vert;
-
-  gf.clear();
-
-  int n = 1 + curr.uncoloredVertices + cl.nCliques * color + color + 1;
-  int nNew = n + 2;
-
-  for(int i = 0; i < nNew; i++){
-    vert.push_back(add_vertex(gf));
-  }
 
   for(int i = 1; i <= curr.uncoloredVertices; i++){
     eF1 = add_edge(vert[0], vert[i], gf).first;
@@ -113,6 +106,13 @@ bool EqColoring::pruneFF(int color){
     pmf.c[eF2] = 0;
   }
 
+  return true;
+}
+
+bool EqColoring::initA2andA3(std::vector<VertexFord> &vert, int color){
+  EdgeFord eF1, eF2;
+  VertexFordIter vIt1, vIt2;
+
   int aUVPos = 1;
   int tmpIndex, colorPos;
 
@@ -120,7 +120,7 @@ bool EqColoring::pruneFF(int color){
     for(unsigned int j = 0; j < indClq[i].size(); j++){
       for(int k = 0; k < color; k++){
         if(pm.fbc[indClq[i][j]][k] == 0){
-          tmpIndex = curr.uncoloredVertices + (k + 1) + i * (k + 1); 
+          tmpIndex = curr.uncoloredVertices + (k + 1) + i * color; 
 
           eF1 = add_edge(vert[aUVPos], vert[tmpIndex], gf).first;
           eF2 = add_edge(vert[tmpIndex], vert[aUVPos], gf).first;
@@ -132,7 +132,7 @@ bool EqColoring::pruneFF(int color){
           pmf.c[eF2] = 0;
 
           //zur Farbe
-          colorPos = curr.uncoloredVertices + (k + 1) + (cl.nCliques + 1) * (k + 1); 
+          colorPos = curr.uncoloredVertices + (k + 1) + cl.nCliques * color; 
 
           eF1 = add_edge(vert[tmpIndex], vert[colorPos], gf).first;
           eF2 = add_edge(vert[colorPos], vert[tmpIndex], gf).first;
@@ -142,7 +142,6 @@ bool EqColoring::pruneFF(int color){
 
           pmf.c[eF1] = 1;
           pmf.c[eF2] = 0;
-
         }
       }
 
@@ -154,7 +153,7 @@ bool EqColoring::pruneFF(int color){
     if(pm.c[*vIt1] == 0 && pm.cl[*vIt1] == 0){
       for(int k = 0; k < color; k++){
         if(pm.fbc[*vIt1][k] == 0){
-          tmpIndex = curr.uncoloredVertices + (k + 1) + cl.nCliques * (k + 1); 
+          tmpIndex = curr.uncoloredVertices + (k + 1) + (cl.nCliques - 1) * color; 
 
           eF1 = add_edge(vert[aUVPos], vert[tmpIndex], gf).first;
           eF2 = add_edge(vert[tmpIndex], vert[aUVPos], gf).first;
@@ -165,8 +164,7 @@ bool EqColoring::pruneFF(int color){
           pmf.c[eF1] = 1;
           pmf.c[eF2] = 0;
 
-          //zur Farbe
-          colorPos = curr.uncoloredVertices + (k + 1) + (cl.nCliques + 1) * (k + 1); 
+          colorPos = curr.uncoloredVertices + (k + 1) + cl.nCliques * color; 
 
           eF1 = add_edge(vert[tmpIndex], vert[colorPos], gf).first;
           eF2 = add_edge(vert[colorPos], vert[tmpIndex], gf).first;
@@ -176,7 +174,6 @@ bool EqColoring::pruneFF(int color){
 
           pmf.c[eF1] = 1;
           pmf.c[eF2] = 0;
-
         }
       }
 
@@ -184,7 +181,20 @@ bool EqColoring::pruneFF(int color){
     }
   }
 
-  int sumLB = 0, rU, rL;
+  if(aUVPos != curr.uncoloredVertices + 1){
+    std::cout << "error while constructing network" << std::endl;
+    std::cout << "not using all uncolored Vertices" << std::endl;
+
+    return false;
+  }
+
+  return true;
+}
+
+int EqColoring::initA4(std::vector<VertexFord> &vert, int color, std::pair<int, int> counts){
+  int sumLB = 0, rU, rL, colorPos, n = counts.first, nNew = counts.second;
+  EdgeFord eF1, eF2;
+  
 
   for(int i = 1; i <= color; i++){
     rU = parm.n / color + 1;
@@ -199,7 +209,7 @@ bool EqColoring::pruneFF(int color){
 
     sumLB += rL;
 
-    colorPos = curr.uncoloredVertices + i + (cl.nCliques + 1) * i; 
+    colorPos = curr.uncoloredVertices + i + cl.nCliques * color; 
 
     eF1 = add_edge(vert[colorPos], vert[n - 1], gf).first;
     eF2 = add_edge(vert[n - 1], vert[colorPos], gf).first;
@@ -220,6 +230,13 @@ bool EqColoring::pruneFF(int color){
     pmf.c[eF2] = 0;
   }
 
+  return sumLB;
+}
+
+bool EqColoring::initRespectLB(std::vector<VertexFord> &vert, std::pair<int, int> counts, int sumLB){
+  EdgeFord eF1, eF2;
+  int n = counts.first, nNew = counts.second;
+
   eF1 = add_edge(vert[nNew - 2], vert[n - 1], gf).first;
   eF2 = add_edge(vert[n - 1], vert[nNew - 2], gf).first;
 
@@ -238,84 +255,101 @@ bool EqColoring::pruneFF(int color){
   pmf.c[eF1] = INT_MAX;
   pmf.c[eF2] = 0;
 
-  std::vector<default_color_type> col(num_vertices(gf));
-  std::vector<Traits::edge_descriptor> pred(num_vertices(gf));
-  s = vert[nNew - 2], t = vert[nNew - 1];
-  
-  long flow = edmonds_karp_max_flow(gf, s, t, pmf.c, pmf.rc, pmf.re, &col[0], &pred[0]);
+  return true;
+}
 
-  if(!(flow == sumLB)){
-    return true;
-  }else{
-    for(int i = 1; i <= color; i++){
-      rU = parm.n / color + 1;
-      rL = parm.n / color;
+bool EqColoring::removeRespectLB(std::vector<VertexFord> &vert, int color, std::pair<int, int> counts, int sumLB){
+  int rL, rU, colorPos, n = counts.first, nNew = counts.second;
+  EdgeFord eF1, eF2;
 
-      rU -= cc.n[i-1];
-      rL -= cc.n[i-1];
+  for(int i = 1; i <= color; i++){
+    rU = parm.n / color + 1;
+    rL = parm.n / color;
 
-      if(rL < 0){
-        rL = 0;
-      }
+    rU -= cc.n[i-1];
+    rL -= cc.n[i-1];
 
-      colorPos = curr.uncoloredVertices + i + (cl.nCliques + 1) * i; 
-
-      eF1 = add_edge(vert[colorPos], vert[n - 1], gf).first;
-      eF2 = add_edge(vert[n - 1], vert[colorPos], gf).first;
-
-      pmf.re[eF1] = eF2;
-      pmf.re[eF2] = eF1;
-
-      pmf.c[eF1] = rU;
-      pmf.c[eF2] = 0;
-
-      pmf.rc[eF1] = rU - rL;
-      pmf.rc[eF1] = 0;
-
-      eF1 = add_edge(vert[colorPos], vert[nNew - 1], gf).first;
-      eF2 = add_edge(vert[nNew - 1], vert[colorPos], gf).first;
-
-      pmf.re[eF1] = eF2;
-      pmf.re[eF2] = eF1;
-
-      pmf.c[eF1] = 0;
-      pmf.c[eF2] = 0;
-
-      pmf.rc[eF1] = 0;
-      pmf.rc[eF1] = 0;
+    if(rL < 0){
+      rL = 0;
     }
-    
-    eF1 = add_edge(vert[nNew - 2], vert[n - 1], gf).first;
-    eF2 = add_edge(vert[n - 1], vert[nNew - 2], gf).first;
 
-    pmf.re[eF1] = eF2;
-    pmf.re[eF2] = eF1;
+    colorPos = curr.uncoloredVertices + i + cl.nCliques * color; 
 
-    pmf.c[eF1] = sumLB;
+    eF1 = edge(vert[colorPos], vert[n - 1], gf).first;
+    eF2 = edge(vert[n - 1], vert[colorPos], gf).first;
+
+    pmf.c[eF1] = rU;
     pmf.c[eF2] = 0;
 
+    pmf.rc[eF1] = rU - rL;
     pmf.rc[eF1] = 0;
-    pmf.rc[eF1] = 0;
-    
-    eF1 = add_edge(vert[n - 1], vert[0], gf).first;
-    eF2 = add_edge(vert[0], vert[n - 1], gf).first;
 
-    pmf.re[eF1] = eF2;
-    pmf.re[eF2] = eF1;
+    eF1 = edge(vert[colorPos], vert[nNew - 1], gf).first;
+    eF2 = edge(vert[nNew - 1], vert[colorPos], gf).first;
 
     pmf.c[eF1] = 0;
     pmf.c[eF2] = 0;
 
     pmf.rc[eF1] = 0;
     pmf.rc[eF1] = 0;
+  }
+    
+  eF1 = edge(vert[nNew - 2], vert[n - 1], gf).first;
+  eF2 = edge(vert[n - 1], vert[nNew - 2], gf).first;
 
-    std::vector<default_color_type> col2(num_vertices(gf));
-    std::vector<Traits::edge_descriptor> pred2(num_vertices(gf));
-    sNew = vert[nNew - 2], tNew = vert[nNew - 1];
+  pmf.c[eF1] = sumLB;
+  pmf.c[eF2] = 0;
 
-    long flow2 = edmonds_karp_max_flow(gf, sNew, tNew, pmf.c, pmf.rc, pmf.re, &col2[0], &pred2[0]);
+  pmf.rc[eF1] = 0;
+  pmf.rc[eF1] = 0;
+    
+  eF1 = edge(vert[n - 1], vert[0], gf).first;
+  eF2 = edge(vert[0], vert[n - 1], gf).first;
 
-    if(flow2 == curr.uncoloredVertices){
+  pmf.c[eF1] = 0;
+  pmf.c[eF2] = 0;
+
+  pmf.rc[eF1] = 0;
+  pmf.rc[eF1] = 0;
+
+  return true;
+}
+
+bool EqColoring::pruneFF(int color){
+  gf = prevGraphsFF[color - 1].g;
+  pmf = pmPrevGraphsFF[color - 1];
+
+  EdgeFord eF1, eF2;
+  VertexFordIter vIt1, vIt2;
+  std::vector<VertexFord> vert;
+
+  gf.clear();
+
+  int n = 1 + curr.uncoloredVertices + cl.nCliques * color + color + 1, nNew = n + 2;
+  long flow;
+
+  for(int i = 0; i < nNew; i++){
+    vert.push_back(add_vertex(gf));
+  }
+
+  initA1(vert);
+  
+  initA2andA3(vert, color);
+  
+  int sumLB = initA4(vert, color, std::make_pair(n, nNew));
+
+  initRespectLB(vert, std::make_pair(n, nNew), sumLB);
+
+  flow = performEKMF(gf, vert[nNew - 2], vert[nNew - 1]);
+
+  if(!(flow == sumLB)){
+    return true;
+  }else{
+    removeRespectLB(vert, color, std::make_pair(n, nNew), sumLB);
+    
+    flow = performEKMF(gf, vert[0], vert[n - 1]);
+
+    if(flow == curr.uncoloredVertices){
       return false;
     }else{
       return true;
@@ -323,29 +357,36 @@ bool EqColoring::pruneFF(int color){
   }
 }
 
+long EqColoring::performEKMF(GraphFord &fg, VertexFord &vs, VertexFord &vt){
+  std::vector<default_color_type> col(num_vertices(gf));
+  std::vector<Traits::edge_descriptor> pred(num_vertices(gf));
+
+  Traits::vertex_descriptor s = vs, t = vt;
+  
+  long flow = edmonds_karp_max_flow(gf, s, t, pmf.c, pmf.rc, pmf.re, &col[0], &pred[0]);
+
+  return flow;
+}
+
 bool EqColoring::useNewIndepCliques(){
-  std::vector<std::vector<Vertex> > indClqTmp = indClq;
-  Cliques clTmp = cl;
-  Graph tmpG;
-            
-  copy_graph(g, tmpG);
-  setClique(0, 0, false);
-            
-  findIndepCliques(indClq, true, false);
+  vertexIter vIt1, vIt2;
 
-  if(clTmp.nodesInClique > cl.nodesInClique){
-    g = tmpG;
-    cl = clTmp;
-    indClq = indClqTmp;
-
-    return false;
+  for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
+    if(pm.cl[*vIt1] > 1){
+      pm.cl[*vIt1] = 0;
+    }
   }
+
+  setClique(startClique.size(), 1, false);
+            
+  findIndepCliques(indClq, true, true);
 
   return true;
 }
 
 bool EqColoring::nodeClique(){
   if(curr.uncoloredVertices == 0){
+    std::cout << "neue bound = " << curr.nColors << std::endl;
     b.UB = curr.nColors;
 
     return true;
@@ -353,18 +394,21 @@ bool EqColoring::nodeClique(){
 
   Vertex v = passVSS();
 
-
   for(int i = 1; i <= std::min(b.UB - 1, curr.nColors + 1); i++){
     if(pm.fbc[v][i - 1] == 0){
       if(parm.n >= (curr.M - 1) * std::max(curr.nColors, b.LB) + curr.T){
         if(!pruneFF()){
+          c.visitedNodes++; 
+
           colorVertex(v, i);
 
-          if(pm.cl[v] != 0){
+          if(pm.cl[v] > 1){
             useNewIndepCliques();
+          }else if(pm.cl[v] == 1){
+            std::cout << "invalid vertex selection (clique = 1)" << std::endl;
           }
 
-          node(); 
+          nodeClique(); 
           
           if(bt.status){
             if(bt.toRank == curr.rank){
@@ -376,6 +420,8 @@ bool EqColoring::nodeClique(){
           }
 
           uncolorVertex(v);
+
+          useNewIndepCliques();
         }
       }
     }

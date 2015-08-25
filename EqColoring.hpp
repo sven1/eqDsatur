@@ -14,6 +14,15 @@ class EqColoring : Coloring{
 
     bool initPrevGraphsFF();
 
+    bool initA1(std::vector<VertexFord> &vert);
+    bool initA2andA3(std::vector<VertexFord> &vert, int color);
+    int initA4(std::vector<VertexFord> &vert, int color, std::pair<int, int> counts);
+
+    bool initRespectLB(std::vector<VertexFord> &vert, std::pair<int, int> counts, int sumLB);
+    bool removeRespectLB(std::vector<VertexFord> &vert, int color, std::pair<int, int> counts, int sumLB);
+    
+    long performEKMF(GraphFord &gf, VertexFord &vs, VertexFord &vt);
+
   public:
     EqColoring();
     EqColoring(const Parameters &parm);

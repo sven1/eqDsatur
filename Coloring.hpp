@@ -24,6 +24,7 @@ class Coloring {
     bool initNeighbours();
     bool initResize();
     bool initCliques();
+    bool initCounts();
 
     bool initVar();
 
