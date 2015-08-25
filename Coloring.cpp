@@ -199,7 +199,6 @@ bool Coloring::findIndepCliques(std::vector<std::vector<Vertex> > &indClq, bool 
 
     toVisit -= tmp.size();
 
-    //mark neighbours as visited -> Clique: -1
     for(unsigned int i = 0; i < tmp.size(); i++){
       for(tie(aIt1,aIt2) = adjacent_vertices(tmp[i],g); aIt1 != aIt2; aIt1++){
         if(checkNodeParm(*aIt1, uncolored, inNoOtherClique)){

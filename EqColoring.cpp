@@ -182,6 +182,7 @@ bool EqColoring::initA2andA3(std::vector<VertexFord> &vert, int color){
   }
 
   if(aUVPos != curr.uncoloredVertices + 1){
+    std::cout << "aUVPos = " << aUVPos << " and uncoloredVertices = " << curr.uncoloredVertices << std::endl;
     std::cout << "error while constructing network" << std::endl;
     std::cout << "not using all uncolored Vertices" << std::endl;
 
@@ -368,8 +369,15 @@ long EqColoring::performEKMF(GraphFord &fg, VertexFord &vs, VertexFord &vt){
   return flow;
 }
 
-bool EqColoring::useNewIndepCliques(){
+bool EqColoring::useNewIndepCliques(bool sBetterClique){
   vertexIter vIt1, vIt2;
+  Graph tmpG;
+  Cliques tmpCl = cl;
+  std::vector< std::vector<Vertex> > tmpIndClq = indClq;
+
+  if(sBetterClique == true){
+    copy_graph(g, tmpG);
+  }
 
   for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
     if(pm.cl[*vIt1] > 1){
@@ -380,6 +388,12 @@ bool EqColoring::useNewIndepCliques(){
   setClique(startClique.size(), 1, false);
             
   findIndepCliques(indClq, true, true);
+  
+  if(sBetterClique == true && cl.nodesInClique < tmpCl.nodesInClique){
+    g = tmpG;
+    cl = tmpCl;
+    indClq = tmpIndClq;
+  }
 
   return true;
 }
@@ -403,9 +417,9 @@ bool EqColoring::nodeClique(){
           colorVertex(v, i);
 
           if(pm.cl[v] > 1){
-            useNewIndepCliques();
-          }else if(pm.cl[v] == 1){
-            std::cout << "invalid vertex selection (clique = 1)" << std::endl;
+            useNewIndepCliques(false);
+          }else{
+            useNewIndepCliques(false);
           }
 
           nodeClique(); 
@@ -420,8 +434,6 @@ bool EqColoring::nodeClique(){
           }
 
           uncolorVertex(v);
-
-          useNewIndepCliques();
         }
       }
     }

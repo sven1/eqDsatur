@@ -43,7 +43,7 @@ class EqColoring : Coloring{
     bool checkEquitability() const;
     bool checkEqColoring() const;
 
-    bool useNewIndepCliques();
+    bool useNewIndepCliques(bool sBetterClique);
 
     bool pruneFF();
     bool pruneFF(int color);
