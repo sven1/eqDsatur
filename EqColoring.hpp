@@ -23,6 +23,10 @@ class EqColoring : Coloring{
     
     long performEKMF(GraphFord &gf, VertexFord &vs, VertexFord &vt);
 
+    bool updateIndepCliques(Vertex &v);
+    void updateBackupGraphs(Vertex &v, bool removeVertex);
+    void updateBackupGraphsHelp(Vertex &v, int i, bool removeVertex);
+
   public:
     EqColoring();
     EqColoring(const Parameters &parm);

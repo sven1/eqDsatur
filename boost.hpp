@@ -39,16 +39,21 @@ struct grad_t {
     typedef vertex_property_tag kind;
 };
 
+struct ref_vertex_t {
+    typedef vertex_property_tag kind;
+};
+
 typedef property<vertex_index_t, int, property<vertex_color_t, int, property<clique_t, int, property<nachbarn_t, std::vector<int>, property<fb_colors_t, std::vector<int>, property<av_color_t, int, property<rank_t, int, property<grad_t , int > > >  > > > > > VertexProperty;
 typedef property<edge_weight_t, std::pair<int,int> > EdgeProperty;
 typedef adjacency_list<vecS, vecS, undirectedS, VertexProperty, EdgeProperty> Graph;
 typedef adjacency_list_traits<vecS, vecS, directedS> Traits;
-typedef adjacency_list<listS, vecS, directedS, property<vertex_name_t, std::string>, property<edge_capacity_t, long, property<edge_residual_capacity_t, long, property<edge_reverse_t, Traits::edge_descriptor> > > > GraphFord;
+typedef adjacency_list<listS, vecS, directedS, property<vertex_name_t, std::string, property<ref_vertex_t, int> >, property<edge_capacity_t, long, property<edge_residual_capacity_t, long, property<edge_reverse_t, Traits::edge_descriptor> > > > GraphFord;
 typedef graph_traits<GraphFord>::edge_descriptor EdgeFord;
 typedef graph_traits<GraphFord>::vertex_descriptor VertexFord;
 typedef graph_traits<GraphFord>::vertex_iterator VertexFordIter;
 typedef graph_traits<GraphFord>::out_edge_iterator EdgesOutFordIter;
 typedef graph_traits<GraphFord>::edge_iterator EdgeFordIter;
+typedef property_map<GraphFord, ref_vertex_t>::type RefVertexMap;
 typedef property_map<GraphFord, edge_capacity_t>::type CapacityMap;
 typedef property_map<GraphFord, edge_reverse_t>::type ReverseEdgeMap;
 typedef property_map<GraphFord, edge_residual_capacity_t>::type ResidualCapacityMap;

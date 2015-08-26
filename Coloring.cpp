@@ -399,7 +399,7 @@ bool Coloring::setClique(long nodesInClique, long nCliques, bool newClique){
   return true;
 }
 
-bool Coloring::setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, int M, long nColors){
+bool Coloring::setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, int M, long nColors, bool createNewGraphs){
   curr.color = c;
   curr.rank = r;
   curr.node = node;
@@ -407,6 +407,7 @@ bool Coloring::setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, 
   curr.T = T;
   curr.M = M;
   curr.nColors = nColors;
+  curr.createNewGraphs = createNewGraphs;
 
   return true;
 }
@@ -420,6 +421,8 @@ bool Coloring::checkForBacktracking(Vertex v){
 
   bt.toRank = backtrackToRank(v);
   bt.status = true;
+  c.backtracks++;
+  curr.createNewGraphs = true;
 
   return true;
 }
@@ -464,6 +467,7 @@ bool Coloring::initCounts(){
   c.nFF = 0;
   c.visitedNodes = 0;
   c.newCliques = 0;
+  c.backtracks = 0;
 
   return true;
 }
@@ -505,7 +509,7 @@ bool Coloring::initVar(){
     return false;
   }
 
-  if(!setCurr(0, 0, 0, parm.n, 0, 0, 0)){
+  if(!setCurr(0, 0, 0, parm.n, 0, 0, 0, false)){
     std::cout << "error while setting init current information" << std::endl;
 
     return false;
@@ -683,6 +687,13 @@ void Coloring::printFBC(const Vertex &v) const{
   for(unsigned int i = 0; i < pm.fbc[v].size(); i++){
     std::cout << " " << pm.fbc[v][i];
   }
+}
+
+void Coloring::printCounts() const{
+  std::cout << "# new Cliques: " << c.newCliques << std::endl;
+  std::cout << "# FF: " << c.nFF << std::endl;
+  std::cout << "# visited nodes: " << c.visitedNodes << std::endl;
+  std::cout << "# backtracks: " << c.backtracks << std::endl;
 }
 
 void Coloring::printFBC() const{

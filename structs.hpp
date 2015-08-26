@@ -12,12 +12,17 @@ struct Current {
   long uncoloredVertices;
   int T;
   int M;
+  bool createNewGraphs;
 };
 
 struct prevGraphs {
   GraphFord g;
   Vertex dlNode;
   long dlColor;
+  int uncoloredVertices;
+  std::vector<VertexFord> vert;
+  int n;
+  int nNew;
 };
 
 struct Bounds {
@@ -35,6 +40,7 @@ struct Count {
   long visitedNodes;
   long newCliques;
   long nFF;
+  long backtracks;
 };
 
 struct Parameters {
@@ -69,6 +75,7 @@ struct PropertyMapFF {
   CapacityMap c;
   ReverseEdgeMap re;
   ResidualCapacityMap rc;
+  RefVertexMap rf;
 };
 
 struct Cliques {

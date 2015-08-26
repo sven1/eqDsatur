@@ -16,7 +16,7 @@ EqColoring::EqColoring(const Parameters &parm) : Coloring(parm){
   
   printAll();
 
-  std::cout << "------ nVisited = " << c.visitedNodes << std::endl;
+  printCounts();
 }
 
 bool EqColoring::initPrevGraphsFF(){
@@ -27,6 +27,7 @@ bool EqColoring::initPrevGraphsFF(){
     pmPrevGraphsFF[i].c = get(edge_capacity, prevGraphsFF[i].g);
     pmPrevGraphsFF[i].re = get(edge_reverse, prevGraphsFF[i].g);
     pmPrevGraphsFF[i].rc = get(edge_residual_capacity, prevGraphsFF[i].g);
+    pmPrevGraphsFF[i].rf = get(ref_vertex_t(), prevGraphsFF[i].g);
   }
 
   return true;
@@ -84,6 +85,8 @@ bool EqColoring::node(){
 
 bool EqColoring::pruneFF(){
   for(unsigned int i = curr.nColors; i < b.UB; i++){
+    c.nFF++;
+
     if(!pruneFF(i)){
       return false;
     }
@@ -118,6 +121,8 @@ bool EqColoring::initA2andA3(std::vector<VertexFord> &vert, int color){
 
   for(unsigned int i = 0; i < indClq.size(); i++){
     for(unsigned int j = 0; j < indClq[i].size(); j++){
+      pmf.rf[vert[aUVPos]] = indClq[i][j];
+
       for(int k = 0; k < color; k++){
         if(pm.fbc[indClq[i][j]][k] == 0){
           tmpIndex = curr.uncoloredVertices + (k + 1) + i * color; 
@@ -151,6 +156,8 @@ bool EqColoring::initA2andA3(std::vector<VertexFord> &vert, int color){
 
   for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
     if(pm.c[*vIt1] == 0 && pm.cl[*vIt1] == 0){
+      pmf.rf[vert[aUVPos]] = *vIt1;
+
       for(int k = 0; k < color; k++){
         if(pm.fbc[*vIt1][k] == 0){
           tmpIndex = curr.uncoloredVertices + (k + 1) + (cl.nCliques - 1) * color; 
@@ -319,6 +326,7 @@ bool EqColoring::removeRespectLB(std::vector<VertexFord> &vert, int color, std::
 bool EqColoring::pruneFF(int color){
   gf = prevGraphsFF[color - 1].g;
   pmf = pmPrevGraphsFF[color - 1];
+  pmf.rf = get(ref_vertex_t(), gf);
 
   EdgeFord eF1, eF2;
   VertexFordIter vIt1, vIt2;
@@ -389,13 +397,58 @@ bool EqColoring::useNewIndepCliques(bool sBetterClique){
             
   findIndepCliques(indClq, true, true);
   
-  if(sBetterClique == true && cl.nodesInClique < tmpCl.nodesInClique){
+  if(sBetterClique == true && cl.nodesInClique <= tmpCl.nodesInClique){
     g = tmpG;
     cl = tmpCl;
     indClq = tmpIndClq;
+
+    return false;
   }
 
   return true;
+}
+
+bool EqColoring::updateIndepCliques(Vertex &v){
+  if(pm.cl[v] > 1){
+    useNewIndepCliques(false);
+  }else{
+    if(!useNewIndepCliques(true)){
+      return false;
+    }
+  }
+
+  c.newCliques++;
+  curr.createNewGraphs = true;
+
+  return true;
+}
+
+void EqColoring::updateBackupGraphs(Vertex &v, bool removeVertex){
+  for(int i = b.LB; i < b.UB; i++){
+    updateBackupGraphsHelp(v, i, removeVertex);
+  }
+}
+
+void EqColoring::updateBackupGraphsHelp(Vertex &v, int i, bool removeVertex){
+  gf = prevGraphsFF[i - 1].g;
+  pmf = pmPrevGraphsFF[i - 1];
+  pmf.rf = get(ref_vertex_t(), gf);
+
+  EdgeFord eF1;
+
+  for(int j = 1; j <= prevGraphsFF[i - 1].uncoloredVertices; j++){
+    if(prevGraphsFF[i - 1].vert[j] == v){
+      eF1 = edge(prevGraphsFF[i - 1].vert[0], prevGraphsFF[i - 1].vert[j], gf).first;
+
+      if(removeVertex){
+        pmf.c[eF1] = 0;
+      }else{
+        pmf.c[eF1] = 1;
+      }
+
+      break;
+    } 
+  }
 }
 
 bool EqColoring::nodeClique(){
@@ -416,11 +469,11 @@ bool EqColoring::nodeClique(){
 
           colorVertex(v, i);
 
-          if(pm.cl[v] > 1){
-            useNewIndepCliques(false);
-          }else{
-            useNewIndepCliques(false);
-          }
+          updateIndepCliques(v);
+
+          //if(!curr.createNewGraphs){
+            //updateBackupGraphs(v, true); 
+          //}
 
           nodeClique(); 
           
