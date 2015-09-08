@@ -20,15 +20,17 @@ EqColoring::EqColoring(const Parameters &parm) : Coloring(parm){
 }
 
 bool EqColoring::initPrevGraphsFF(){
-  prevGraphsFF.resize(b.UB);
-  pmPrevGraphsFF.resize(b.UB);
+  gf.resize(b.UB);
+  pmf.resize(b.UB);
 
-  for(unsigned int i = 0; i < pmPrevGraphsFF.size(); i++){
-    pmPrevGraphsFF[i].c = get(edge_capacity, prevGraphsFF[i].g);
-    pmPrevGraphsFF[i].re = get(edge_reverse, prevGraphsFF[i].g);
-    pmPrevGraphsFF[i].rc = get(edge_residual_capacity, prevGraphsFF[i].g);
-    pmPrevGraphsFF[i].rf = get(ref_vertex_t(), prevGraphsFF[i].g);
+  for(unsigned int i = 0; i < pmf.size(); i++){
+    pmf[i].c = get(edge_capacity, gf[i].g);
+    pmf[i].re = get(edge_reverse, gf[i].g);
+    pmf[i].rc = get(edge_residual_capacity, gf[i].g);
+    pmf[i].rf = get(ref_vertex_t(), gf[i].g);
   }
+
+  initBackupGraphs();
 
   return true;
 }
@@ -95,58 +97,59 @@ bool EqColoring::pruneFF(){
   return true;
 }
 
-bool EqColoring::initA1(std::vector<VertexFord> &vert){
+bool EqColoring::initA1(int j){
   EdgeFord eF1, eF2;
 
   for(int i = 1; i <= curr.uncoloredVertices; i++){
-    eF1 = add_edge(vert[0], vert[i], gf).first;
-    eF2 = add_edge(vert[i], vert[0], gf).first;
+    eF1 = add_edge(gf[j-1].vert[0], gf[j-1].vert[i], gf[j-1].g).first;
+    eF2 = add_edge(gf[j-1].vert[i], gf[j-1].vert[0], gf[j-1].g).first;
 
-    pmf.re[eF1] = eF2;
-    pmf.re[eF2] = eF1;
+    pmf[j-1].re[eF1] = eF2;
+    pmf[j-1].re[eF2] = eF1;
 
-    pmf.c[eF1] = 1;
-    pmf.c[eF2] = 0;
+    pmf[j-1].c[eF1] = 1;
+    pmf[j-1].c[eF2] = 0;
   }
 
   return true;
 }
 
-bool EqColoring::initA2andA3(std::vector<VertexFord> &vert, int color){
+bool EqColoring::initA2andA3(int l){
   EdgeFord eF1, eF2;
   VertexFordIter vIt1, vIt2;
 
   int aUVPos = 1;
   int tmpIndex, colorPos;
+  int color = l;
 
   for(unsigned int i = 0; i < indClq.size(); i++){
     for(unsigned int j = 0; j < indClq[i].size(); j++){
-      pmf.rf[vert[aUVPos]] = indClq[i][j];
+      pmf[l-1].rf[gf[l-1].vert[aUVPos]] = indClq[i][j];
 
       for(int k = 0; k < color; k++){
         if(pm.fbc[indClq[i][j]][k] == 0){
           tmpIndex = curr.uncoloredVertices + (k + 1) + i * color; 
 
-          eF1 = add_edge(vert[aUVPos], vert[tmpIndex], gf).first;
-          eF2 = add_edge(vert[tmpIndex], vert[aUVPos], gf).first;
+          eF1 = add_edge(gf[l-1].vert[aUVPos], gf[l-1].vert[tmpIndex], gf[l-1].g).first;
+          eF2 = add_edge(gf[l-1].vert[tmpIndex], gf[l-1].vert[aUVPos], gf[l-1].g).first;
 
-          pmf.re[eF1] = eF2;
-          pmf.re[eF2] = eF1;
+          pmf[l-1].re[eF1] = eF2;
+          pmf[l-1].re[eF2] = eF1;
 
-          pmf.c[eF1] = 1;
-          pmf.c[eF2] = 0;
+          pmf[l-1].c[eF1] = 1;
+          pmf[l-1].c[eF2] = 0;
 
           //zur Farbe
           colorPos = curr.uncoloredVertices + (k + 1) + cl.nCliques * color; 
 
-          eF1 = add_edge(vert[tmpIndex], vert[colorPos], gf).first;
-          eF2 = add_edge(vert[colorPos], vert[tmpIndex], gf).first;
+          eF1 = add_edge(gf[l-1].vert[tmpIndex], gf[l-1].vert[colorPos], gf[l-1].g).first;
+          eF2 = add_edge(gf[l-1].vert[colorPos], gf[l-1].vert[tmpIndex], gf[l-1].g).first;
 
-          pmf.re[eF1] = eF2;
-          pmf.re[eF2] = eF1;
+          pmf[l-1].re[eF1] = eF2;
+          pmf[l-1].re[eF2] = eF1;
 
-          pmf.c[eF1] = 1;
-          pmf.c[eF2] = 0;
+          pmf[l-1].c[eF1] = 1;
+          pmf[l-1].c[eF2] = 0;
         }
       }
 
@@ -156,31 +159,31 @@ bool EqColoring::initA2andA3(std::vector<VertexFord> &vert, int color){
 
   for(tie(vIt1,vIt2) = vertices(g); vIt1 != vIt2; vIt1++){
     if(pm.c[*vIt1] == 0 && pm.cl[*vIt1] == 0){
-      pmf.rf[vert[aUVPos]] = *vIt1;
+      pmf[l-1].rf[gf[l-1].vert[aUVPos]] = *vIt1;
 
       for(int k = 0; k < color; k++){
         if(pm.fbc[*vIt1][k] == 0){
           tmpIndex = curr.uncoloredVertices + (k + 1) + (cl.nCliques - 1) * color; 
 
-          eF1 = add_edge(vert[aUVPos], vert[tmpIndex], gf).first;
-          eF2 = add_edge(vert[tmpIndex], vert[aUVPos], gf).first;
+          eF1 = add_edge(gf[l-1].vert[aUVPos], gf[l-1].vert[tmpIndex], gf[l-1].g).first;
+          eF2 = add_edge(gf[l-1].vert[tmpIndex], gf[l-1].vert[aUVPos], gf[l-1].g).first;
 
-          pmf.re[eF1] = eF2;
-          pmf.re[eF2] = eF1;
+          pmf[l-1].re[eF1] = eF2;
+          pmf[l-1].re[eF2] = eF1;
 
-          pmf.c[eF1] = 1;
-          pmf.c[eF2] = 0;
+          pmf[l-1].c[eF1] = 1;
+          pmf[l-1].c[eF2] = 0;
 
           colorPos = curr.uncoloredVertices + (k + 1) + cl.nCliques * color; 
 
-          eF1 = add_edge(vert[tmpIndex], vert[colorPos], gf).first;
-          eF2 = add_edge(vert[colorPos], vert[tmpIndex], gf).first;
+          eF1 = add_edge(gf[l-1].vert[tmpIndex], gf[l-1].vert[colorPos], gf[l-1].g).first;
+          eF2 = add_edge(gf[l-1].vert[colorPos], gf[l-1].vert[tmpIndex], gf[l-1].g).first;
 
-          pmf.re[eF1] = eF2;
-          pmf.re[eF2] = eF1;
+          pmf[l-1].re[eF1] = eF2;
+          pmf[l-1].re[eF2] = eF1;
 
-          pmf.c[eF1] = 1;
-          pmf.c[eF2] = 0;
+          pmf[l-1].c[eF1] = curr.uncoloredVertices - (cl.nodesInClique - startClique.size());
+          pmf[l-1].c[eF2] = 0;
         }
       }
 
@@ -199,10 +202,9 @@ bool EqColoring::initA2andA3(std::vector<VertexFord> &vert, int color){
   return true;
 }
 
-int EqColoring::initA4(std::vector<VertexFord> &vert, int color, std::pair<int, int> counts){
-  int sumLB = 0, rU, rL, colorPos, n = counts.first, nNew = counts.second;
+int EqColoring::initA4(int l){
+  int sumLB = 0, rU, rL, colorPos, n = gf[l-1].n, nNew = gf[l-1].nNew, color = l;
   EdgeFord eF1, eF2;
-  
 
   for(int i = 1; i <= color; i++){
     rU = parm.n / color + 1;
@@ -217,57 +219,58 @@ int EqColoring::initA4(std::vector<VertexFord> &vert, int color, std::pair<int, 
 
     sumLB += rL;
 
-    colorPos = curr.uncoloredVertices + i + cl.nCliques * color; 
+    colorPos = gf[l-1].uncoloredVertices + i + cl.nCliques * color; 
 
-    eF1 = add_edge(vert[colorPos], vert[n - 1], gf).first;
-    eF2 = add_edge(vert[n - 1], vert[colorPos], gf).first;
+    eF1 = add_edge(gf[l-1].vert[colorPos], gf[l-1].vert[n - 1], gf[l-1].g).first;
+    eF2 = add_edge(gf[l-1].vert[n - 1], gf[l-1].vert[colorPos], gf[l-1].g).first;
 
-    pmf.re[eF1] = eF2;
-    pmf.re[eF2] = eF1;
+    pmf[l-1].re[eF1] = eF2;
+    pmf[l-1].re[eF2] = eF1;
 
-    pmf.c[eF1] = rU - rL;
-    pmf.c[eF2] = 0;
+    pmf[l-1].c[eF1] = rU - rL;
+    pmf[l-1].c[eF2] = 0;
 
-    eF1 = add_edge(vert[colorPos], vert[nNew - 1], gf).first;
-    eF2 = add_edge(vert[nNew - 1], vert[colorPos], gf).first;
+    eF1 = add_edge(gf[l-1].vert[colorPos], gf[l-1].vert[nNew - 1], gf[l-1].g).first;
+    eF2 = add_edge(gf[l-1].vert[nNew - 1], gf[l-1].vert[colorPos], gf[l-1].g).first;
 
-    pmf.re[eF1] = eF2;
-    pmf.re[eF2] = eF1;
+    pmf[l-1].re[eF1] = eF2;
+    pmf[l-1].re[eF2] = eF1;
 
-    pmf.c[eF1] = rL;
-    pmf.c[eF2] = 0;
+    pmf[l-1].c[eF1] = rL;
+    pmf[l-1].c[eF2] = 0;
   }
 
   return sumLB;
 }
 
-bool EqColoring::initRespectLB(std::vector<VertexFord> &vert, std::pair<int, int> counts, int sumLB){
+bool EqColoring::initRespectLB(int l, int sumLB){
   EdgeFord eF1, eF2;
-  int n = counts.first, nNew = counts.second;
+  int n = gf[l-1].n, nNew = gf[l-1].nNew;
 
-  eF1 = add_edge(vert[nNew - 2], vert[n - 1], gf).first;
-  eF2 = add_edge(vert[n - 1], vert[nNew - 2], gf).first;
+  eF1 = add_edge(gf[l-1].vert[nNew - 2], gf[l-1].vert[n - 1], gf[l-1].g).first;
+  eF2 = add_edge(gf[l-1].vert[n - 1], gf[l-1].vert[nNew - 2], gf[l-1].g).first;
 
-  pmf.re[eF1] = eF2;
-  pmf.re[eF2] = eF1;
+  pmf[l-1].re[eF1] = eF2;
+  pmf[l-1].re[eF2] = eF1;
 
-  pmf.c[eF1] = sumLB;
-  pmf.c[eF2] = 0;
+  pmf[l-1].c[eF1] = sumLB;
+  pmf[l-1].c[eF2] = 0;
 
-  eF1 = add_edge(vert[n - 1], vert[0], gf).first;
-  eF2 = add_edge(vert[0], vert[n - 1], gf).first;
+  eF1 = add_edge(gf[l-1].vert[n - 1], gf[l-1].vert[0], gf[l-1].g).first;
+  eF2 = add_edge(gf[l-1].vert[0], gf[l-1].vert[n - 1], gf[l-1].g).first;
 
-  pmf.re[eF1] = eF2;
-  pmf.re[eF2] = eF1;
+  pmf[l-1].re[eF1] = eF2;
+  pmf[l-1].re[eF2] = eF1;
 
-  pmf.c[eF1] = INT_MAX;
-  pmf.c[eF2] = 0;
+  pmf[l-1].c[eF1] = INT_MAX;
+  pmf[l-1].c[eF2] = 0;
 
   return true;
 }
 
-bool EqColoring::removeRespectLB(std::vector<VertexFord> &vert, int color, std::pair<int, int> counts, int sumLB){
-  int rL, rU, colorPos, n = counts.first, nNew = counts.second;
+bool EqColoring::removeRespectLB(int l, int sumLB){
+  int rL, rU, colorPos, n = gf[l-1].n, nNew = gf[l-1].nNew, color = l;
+
   EdgeFord eF1, eF2;
 
   for(int i = 1; i <= color; i++){
@@ -281,82 +284,97 @@ bool EqColoring::removeRespectLB(std::vector<VertexFord> &vert, int color, std::
       rL = 0;
     }
 
-    colorPos = curr.uncoloredVertices + i + cl.nCliques * color; 
+    colorPos = gf[l-1].uncoloredVertices + i + cl.nCliques * color; 
 
-    eF1 = edge(vert[colorPos], vert[n - 1], gf).first;
-    eF2 = edge(vert[n - 1], vert[colorPos], gf).first;
+    eF1 = edge(gf[l-1].vert[colorPos], gf[l-1].vert[n - 1], gf[l-1].g).first;
+    eF2 = edge(gf[l-1].vert[n - 1], gf[l-1].vert[colorPos], gf[l-1].g).first;
 
-    pmf.c[eF1] = rU;
-    pmf.c[eF2] = 0;
+    pmf[l-1].c[eF1] = rU;
+    pmf[l-1].c[eF2] = 0;
 
-    pmf.rc[eF1] = rU - rL;
-    pmf.rc[eF1] = 0;
+    pmf[l-1].rc[eF1] = rU - rL;
+    pmf[l-1].rc[eF1] = 0;
 
-    eF1 = edge(vert[colorPos], vert[nNew - 1], gf).first;
-    eF2 = edge(vert[nNew - 1], vert[colorPos], gf).first;
+    eF1 = edge(gf[l-1].vert[colorPos], gf[l-1].vert[nNew - 1], gf[l-1].g).first;
+    eF2 = edge(gf[l-1].vert[nNew - 1], gf[l-1].vert[colorPos], gf[l-1].g).first;
 
-    pmf.c[eF1] = 0;
-    pmf.c[eF2] = 0;
+    pmf[l-1].c[eF1] = 0;
+    pmf[l-1].c[eF2] = 0;
 
-    pmf.rc[eF1] = 0;
-    pmf.rc[eF1] = 0;
+    pmf[l-1].rc[eF1] = 0;
+    pmf[l-1].rc[eF1] = 0;
   }
-    
-  eF1 = edge(vert[nNew - 2], vert[n - 1], gf).first;
-  eF2 = edge(vert[n - 1], vert[nNew - 2], gf).first;
 
-  pmf.c[eF1] = sumLB;
-  pmf.c[eF2] = 0;
+  eF1 = edge(gf[l-1].vert[n - 1], gf[l-1].vert[0], gf[l-1].g).first;
+  eF2 = edge(gf[l-1].vert[0], gf[l-1].vert[n - 1], gf[l-1].g).first;
 
-  pmf.rc[eF1] = 0;
-  pmf.rc[eF1] = 0;
-    
-  eF1 = edge(vert[n - 1], vert[0], gf).first;
-  eF2 = edge(vert[0], vert[n - 1], gf).first;
+  pmf[l-1].c[eF1] = 0;
+  pmf[l-1].c[eF2] = 0;
 
-  pmf.c[eF1] = 0;
-  pmf.c[eF2] = 0;
-
-  pmf.rc[eF1] = 0;
-  pmf.rc[eF1] = 0;
+  pmf[l-1].rc[eF1] = 0;
+  pmf[l-1].rc[eF1] = 0;
 
   return true;
 }
 
-bool EqColoring::pruneFF(int color){
-  gf = prevGraphsFF[color - 1].g;
-  pmf = pmPrevGraphsFF[color - 1];
-  pmf.rf = get(ref_vertex_t(), gf);
+void EqColoring::initBackupGraphs(){
+  for(int i = b.LB; i < b.UB; i++){
+    gf[i-1].g.clear();
+    gf[i-1].vert.clear();
 
+    gf[i - 1].uncoloredVertices = curr.uncoloredVertices;
+    gf[i - 1].n = 1 + curr.uncoloredVertices + cl.nCliques * i + i + 1;
+    gf[i - 1].nNew = gf[i - 1].n + 2;
+
+    for(int j = 0; j < gf[i-1].nNew; j++){
+      gf[i-1].vert.push_back(add_vertex(gf[i-1].g));
+    }
+    
+    initA1(i);
+  
+    initA2andA3(i);
+    
+    int sumLB = initA4(i);
+
+    initRespectLB(i, sumLB);
+
+    gf[i-1].sumLB = sumLB;
+  }
+}
+
+void EqColoring::resetCap(int i){
+  EdgesOutFordIter ei1, ei2;
+  VertexFordIter it1, it2;
+
+  for(tie(it1, it2) = vertices(gf[i-1].g); it1 != it2; it1++){
+    for(tie(ei1, ei2) = out_edges(*it1, gf[i-1].g); ei1 != ei2; ei1++){
+      pmf[i-1].rc[*ei1] = 0; 
+    }
+  }
+}
+
+bool EqColoring::pruneFF(int color){
   EdgeFord eF1, eF2;
   VertexFordIter vIt1, vIt2;
-  std::vector<VertexFord> vert;
 
-  gf.clear();
-
-  int n = 1 + curr.uncoloredVertices + cl.nCliques * color + color + 1, nNew = n + 2;
   long flow;
 
-  for(int i = 0; i < nNew; i++){
-    vert.push_back(add_vertex(gf));
+  if(curr.createNewGraphs){
+    initBackupGraphs();
+
+    curr.createNewGraphs = false;
+  }else{
+    resetCap(color);
   }
 
-  initA1(vert);
-  
-  initA2andA3(vert, color);
-  
-  int sumLB = initA4(vert, color, std::make_pair(n, nNew));
+  flow = performEKMF(color, gf[color-1].vert[gf[color-1].nNew - 2], gf[color-1].vert[gf[color-1].nNew - 1]);
 
-  initRespectLB(vert, std::make_pair(n, nNew), sumLB);
-
-  flow = performEKMF(gf, vert[nNew - 2], vert[nNew - 1]);
-
-  if(!(flow == sumLB)){
+  if(!(flow == gf[color-1].sumLB)){
     return true;
   }else{
-    removeRespectLB(vert, color, std::make_pair(n, nNew), sumLB);
+    removeRespectLB(color, gf[color-1].sumLB);
     
-    flow = performEKMF(gf, vert[0], vert[n - 1]);
+    flow = performEKMF(color, gf[color-1].vert[0], gf[color-1].vert[gf[color-1].n - 1]);
 
     if(flow == curr.uncoloredVertices){
       return false;
@@ -366,13 +384,13 @@ bool EqColoring::pruneFF(int color){
   }
 }
 
-long EqColoring::performEKMF(GraphFord &fg, VertexFord &vs, VertexFord &vt){
-  std::vector<default_color_type> col(num_vertices(gf));
-  std::vector<Traits::edge_descriptor> pred(num_vertices(gf));
+long EqColoring::performEKMF(int l, VertexFord &vs, VertexFord &vt){
+  std::vector<default_color_type> col(num_vertices(gf[l-1].g));
+  std::vector<Traits::edge_descriptor> pred(num_vertices(gf[l-1].g));
 
   Traits::vertex_descriptor s = vs, t = vt;
   
-  long flow = edmonds_karp_max_flow(gf, s, t, pmf.c, pmf.rc, pmf.re, &col[0], &pred[0]);
+  long flow = edmonds_karp_max_flow(gf[l-1].g, s, t, pmf[l-1].c, pmf[l-1].rc, pmf[l-1].re, &col[0], &pred[0]);
 
   return flow;
 }
@@ -418,36 +436,141 @@ bool EqColoring::updateIndepCliques(Vertex &v){
   }
 
   c.newCliques++;
+  curr.rankNC = curr.rank;
   curr.createNewGraphs = true;
 
   return true;
 }
 
-void EqColoring::updateBackupGraphs(Vertex &v, bool removeVertex){
+void EqColoring::updateBackupGraphs(Vertex &v, int k, bool removeVertex){
   for(int i = b.LB; i < b.UB; i++){
-    updateBackupGraphsHelp(v, i, removeVertex);
+    updateBackupGraphsHelp(v, i, k, removeVertex);
   }
 }
 
-void EqColoring::updateBackupGraphsHelp(Vertex &v, int i, bool removeVertex){
-  gf = prevGraphsFF[i - 1].g;
-  pmf = pmPrevGraphsFF[i - 1];
-  pmf.rf = get(ref_vertex_t(), gf);
+void EqColoring::updateBackupGraphsHelp(Vertex &v, int i, int k, bool removeVertex){
+  EdgeFord eF1, eF2;
 
-  EdgeFord eF1;
-
-  for(int j = 1; j <= prevGraphsFF[i - 1].uncoloredVertices; j++){
-    if(prevGraphsFF[i - 1].vert[j] == v){
-      eF1 = edge(prevGraphsFF[i - 1].vert[0], prevGraphsFF[i - 1].vert[j], gf).first;
+  for(int j = 1; j <= gf[i - 1].uncoloredVertices; j++){
+    if(pmf[i-1].rf[gf[i - 1].vert[j]] == (int) v){
+      eF1 = edge(gf[i - 1].vert[0], gf[i - 1].vert[j], gf[i-1].g).first;
 
       if(removeVertex){
-        pmf.c[eF1] = 0;
+        pmf[i-1].c[eF1] = 0;
+
+        if(pm.cl[v] != 0){
+          int colorPos1 = gf[i-1].uncoloredVertices + k + cl.nCliques * i; 
+          int tmpIndex = gf[i-1].uncoloredVertices + k + (pm.cl[v] - 2) * i; 
+
+          eF1 = edge(gf[i-1].vert[tmpIndex], gf[i-1].vert[colorPos1], gf[i-1].g).first;
+          eF2 = edge(gf[i-1].vert[colorPos1], gf[i-1].vert[tmpIndex], gf[i-1].g).first;
+
+          pmf[i-1].c[eF1] = 0;
+          pmf[i-1].c[eF2] = 0;
+        }
       }else{
-        pmf.c[eF1] = 1;
+        pmf[i-1].c[eF1] = 1;
+
+        if(pm.cl[v] != 0){
+          int colorPos1 = gf[i-1].uncoloredVertices + k + cl.nCliques * i; 
+          int tmpIndex = gf[i-1].uncoloredVertices + k + (pm.cl[v] - 2) * i; 
+
+          eF1 = edge(gf[i-1].vert[tmpIndex], gf[i-1].vert[colorPos1], gf[i-1].g).first;
+          eF2 = edge(gf[i-1].vert[colorPos1], gf[i-1].vert[tmpIndex], gf[i-1].g).first;
+
+          pmf[i-1].c[eF1] = 1;
+          pmf[i-1].c[eF2] = 0;
+        }
       }
 
       break;
     } 
+  }
+
+  if(removeVertex){
+    eF1 = edge(gf[i-1].vert[gf[i-1].n - 1], gf[i-1].vert[0], gf[i-1].g).first;
+    eF2 = edge(gf[i-1].vert[0], gf[i-1].vert[gf[i-1].n - 1], gf[i-1].g).first;
+
+    pmf[i-1].c[eF1] = INT_MAX;
+    pmf[i-1].c[eF2] = 0;
+
+    eF1 = edge(gf[i-1].vert[gf[i-1].nNew - 2], gf[i-1].vert[gf[i-1].n - 1], gf[i-1].g).first;
+    eF2 = edge(gf[i-1].vert[gf[i-1].n - 1], gf[i-1].vert[gf[i-1].nNew - 2], gf[i-1].g).first;
+
+    gf[i-1].sumLB--;
+
+    pmf[i-1].c[eF1]--;
+    pmf[i-1].c[eF2] = 0;
+
+    int color = i, rU, rL, colorPos;
+
+    for(int z = 1; z <= color; z++){
+      rU = parm.n / color + 1;
+      rL = parm.n / color;
+
+      rU -= cc.n[z-1];
+      rL -= cc.n[z-1];
+
+      if(rL < 0){
+        rL = 0;
+      }
+
+      colorPos = gf[i-1].uncoloredVertices + z + cl.nCliques * color; 
+
+      eF1 = edge(gf[i-1].vert[colorPos], gf[i-1].vert[gf[i-1].n - 1], gf[i-1].g).first;
+      eF2 = edge(gf[i-1].vert[gf[i-1].n - 1], gf[i-1].vert[colorPos], gf[i-1].g).first;
+
+      pmf[i-1].c[eF1] = rU - rL;
+      pmf[i-1].c[eF2] = 0;
+
+      eF1 = edge(gf[i-1].vert[colorPos], gf[i-1].vert[gf[i-1].nNew - 1], gf[i-1].g).first;
+      eF2 = edge(gf[i-1].vert[gf[i-1].nNew - 1], gf[i-1].vert[colorPos], gf[i-1].g).first;
+
+      pmf[i-1].c[eF1] = rL;
+      pmf[i-1].c[eF2] = 0;
+    }
+  }else{
+    eF1 = edge(gf[i-1].vert[gf[i-1].n - 1], gf[i-1].vert[0], gf[i-1].g).first;
+    eF2 = edge(gf[i-1].vert[0], gf[i-1].vert[gf[i-1].n - 1], gf[i-1].g).first;
+
+    pmf[i-1].c[eF1] = INT_MAX;
+    pmf[i-1].c[eF2] = 0;
+
+    eF1 = edge(gf[i-1].vert[gf[i-1].nNew - 2], gf[i-1].vert[gf[i-1].n - 1], gf[i-1].g).first;
+    eF2 = edge(gf[i-1].vert[gf[i-1].n - 1], gf[i-1].vert[gf[i-1].nNew - 2], gf[i-1].g).first;
+
+    gf[i-1].sumLB++;
+
+    pmf[i-1].c[eF1]++;
+    pmf[i-1].c[eF2] = 0;
+
+    int color = i, rU, rL, colorPos;
+
+    for(int z = 1; z <= color; z++){
+      rU = parm.n / color + 1;
+      rL = parm.n / color;
+
+      rU -= cc.n[z-1];
+      rL -= cc.n[z-1];
+
+      if(rL < 0){
+        rL = 0;
+      }
+
+      colorPos = gf[i-1].uncoloredVertices + z + cl.nCliques * color; 
+
+      eF1 = edge(gf[i-1].vert[colorPos], gf[i-1].vert[gf[i-1].n - 1], gf[i-1].g).first;
+      eF2 = edge(gf[i-1].vert[gf[i-1].n - 1], gf[i-1].vert[colorPos], gf[i-1].g).first;
+
+      pmf[i-1].c[eF1] = rU - rL;
+      pmf[i-1].c[eF2] = 0;
+
+      eF1 = edge(gf[i-1].vert[colorPos], gf[i-1].vert[gf[i-1].nNew - 1], gf[i-1].g).first;
+      eF2 = edge(gf[i-1].vert[gf[i-1].nNew - 1], gf[i-1].vert[colorPos], gf[i-1].g).first;
+
+      pmf[i-1].c[eF1] = rL;
+      pmf[i-1].c[eF2] = 0;
+    }
   }
 }
 
@@ -471,22 +594,27 @@ bool EqColoring::nodeClique(){
 
           updateIndepCliques(v);
 
-          //if(!curr.createNewGraphs){
-            //updateBackupGraphs(v, true); 
-          //}
+          if(!curr.createNewGraphs){
+            updateBackupGraphs(v, i, true); 
+          }
 
           nodeClique(); 
-          
+
           if(bt.status){
             if(bt.toRank == curr.rank){
               bt.status = false;
             }else if(bt.toRank > curr.rank){
               uncolorVertex(v);
+
+              checkUpdateBackupGraphs(v, i);
+
               return true;
             }
           }
 
           uncolorVertex(v);
+
+          checkUpdateBackupGraphs(v, i);
         }
       }
     }
@@ -495,6 +623,15 @@ bool EqColoring::nodeClique(){
   checkForBacktracking(v);
 
   return false;
+}
+
+void EqColoring::checkUpdateBackupGraphs(Vertex &v, int i){
+  if(curr.rank >= curr.rankNC){
+    updateBackupGraphs(v, i, false); 
+  }else if(curr.rank < curr.rankNC){
+    curr.createNewGraphs = true;
+    curr.rankNC = curr.rank;
+  }
 }
 
 bool EqColoring::dsatur(){

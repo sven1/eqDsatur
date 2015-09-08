@@ -408,6 +408,7 @@ bool Coloring::setCurr(int c, int r, Vertex node, int uncoloredVertices, int T, 
   curr.M = M;
   curr.nColors = nColors;
   curr.createNewGraphs = createNewGraphs;
+  curr.rankNC = 0;
 
   return true;
 }
@@ -421,6 +422,7 @@ bool Coloring::checkForBacktracking(Vertex v){
 
   bt.toRank = backtrackToRank(v);
   bt.status = true;
+  //curr.rankNC = curr.rank;
   c.backtracks++;
   curr.createNewGraphs = true;
 

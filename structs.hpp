@@ -13,6 +13,7 @@ struct Current {
   int T;
   int M;
   bool createNewGraphs;
+  int rankNC;
 };
 
 struct prevGraphs {
@@ -23,6 +24,7 @@ struct prevGraphs {
   std::vector<VertexFord> vert;
   int n;
   int nNew;
+  int sumLB;
 };
 
 struct Bounds {

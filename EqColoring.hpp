@@ -6,26 +6,27 @@
 
 class EqColoring : Coloring{
   private:
-    std::vector<prevGraphs> prevGraphsFF;
-    std::vector<PropertyMapFF> pmPrevGraphsFF;
-
-    GraphFord gf;
-    PropertyMapFF pmf;
+    std::vector<prevGraphs> gf;
+    std::vector<PropertyMapFF> pmf;
 
     bool initPrevGraphsFF();
+    void initBackupGraphs();
 
-    bool initA1(std::vector<VertexFord> &vert);
-    bool initA2andA3(std::vector<VertexFord> &vert, int color);
-    int initA4(std::vector<VertexFord> &vert, int color, std::pair<int, int> counts);
+    bool initA1(int j);
+    bool initA2andA3(int l);
+    int initA4(int l);
 
-    bool initRespectLB(std::vector<VertexFord> &vert, std::pair<int, int> counts, int sumLB);
-    bool removeRespectLB(std::vector<VertexFord> &vert, int color, std::pair<int, int> counts, int sumLB);
+    bool initRespectLB(int l, int sumLB);
+    bool removeRespectLB(int l, int sumLB);
     
-    long performEKMF(GraphFord &gf, VertexFord &vs, VertexFord &vt);
+    long performEKMF(int l, VertexFord &vs, VertexFord &vt);
 
     bool updateIndepCliques(Vertex &v);
-    void updateBackupGraphs(Vertex &v, bool removeVertex);
-    void updateBackupGraphsHelp(Vertex &v, int i, bool removeVertex);
+    void updateBackupGraphs(Vertex &v, int k, bool removeVertex);
+    void updateBackupGraphsHelp(Vertex &v, int i, int k, bool removeVertex);
+    void checkUpdateBackupGraphs(Vertex &v, int i);
+
+    void resetCap(int i);
 
   public:
     EqColoring();
